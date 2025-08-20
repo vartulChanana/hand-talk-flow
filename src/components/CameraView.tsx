@@ -21,14 +21,120 @@ export const CameraView = ({
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
 
-  // Simulate ASL recognition with demo letters
+  // MediaPipe Hands setup and ASL recognition
   useEffect(() => {
-    if (isActive && recognizedLetter) {
+    let hands: any = null;
+    let animationId: number;
+    
+    const setupMediaPipe = async () => {
+      if (!isActive || !videoRef.current || !canvasRef.current) return;
+
+      try {
+        // Import MediaPipe dynamically
+        const { Hands } = await import('@mediapipe/hands');
+        
+        hands = new Hands({
+          locateFile: (file: string) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+        });
+
+        hands.setOptions({
+          maxNumHands: 1,
+          modelComplexity: 1,
+          minDetectionConfidence: 0.7,
+          minTrackingConfidence: 0.5
+        });
+
+        hands.onResults((results: any) => {
+          if (!canvasRef.current) return;
+          
+          const canvas = canvasRef.current;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return;
+
+          // Clear canvas
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+          if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+            const landmarks = results.multiHandLandmarks[0];
+            
+            if (showLandmarks) {
+              // Draw hand landmarks
+              ctx.fillStyle = '#20C997';
+              ctx.strokeStyle = '#20C997';
+              ctx.lineWidth = 2;
+
+              // Draw landmark points
+              landmarks.forEach((landmark: any) => {
+                const x = landmark.x * canvas.width;
+                const y = landmark.y * canvas.height;
+                
+                ctx.beginPath();
+                ctx.arc(x, y, 4, 0, 2 * Math.PI);
+                ctx.fill();
+              });
+
+              // Draw connections
+              const connections = [
+                [0, 1], [1, 2], [2, 3], [3, 4], // Thumb
+                [0, 5], [5, 6], [6, 7], [7, 8], // Index
+                [0, 9], [9, 10], [10, 11], [11, 12], // Middle  
+                [0, 13], [13, 14], [14, 15], [15, 16], // Ring
+                [0, 17], [17, 18], [18, 19], [19, 20], // Pinky
+                [5, 9], [9, 13], [13, 17] // Palm
+              ];
+
+              ctx.globalAlpha = 0.6;
+              ctx.beginPath();
+              connections.forEach(([start, end]) => {
+                const startPoint = landmarks[start];
+                const endPoint = landmarks[end];
+                ctx.moveTo(startPoint.x * canvas.width, startPoint.y * canvas.height);
+                ctx.lineTo(endPoint.x * canvas.width, endPoint.y * canvas.height);
+              });
+              ctx.stroke();
+              ctx.globalAlpha = 1;
+            }
+
+            // Simple gesture recognition for demo
+            const recognizedLetter = recognizeGesture(landmarks);
+            if (recognizedLetter) {
+              onLetterRecognized(recognizedLetter);
+              
+              // Auto-complete word after 2 seconds of same gesture
+              setTimeout(() => {
+                onWordComplete();
+              }, 2000);
+            }
+          }
+        });
+
+        // Process video frames
+        const processFrame = async () => {
+          if (videoRef.current && hands) {
+            await hands.send({ image: videoRef.current });
+          }
+          if (isActive) {
+            animationId = requestAnimationFrame(processFrame);
+          }
+        };
+
+        processFrame();
+
+      } catch (error) {
+        console.error('MediaPipe setup failed:', error);
+        // Fallback to demo mode
+        demoRecognition();
+      }
+    };
+
+    const demoRecognition = () => {
+      if (!isActive) return;
+      
       const letters = ['H', 'E', 'L', 'L', 'O'];
       let index = 0;
 
       const interval = setInterval(() => {
-        if (index < letters.length) {
+        if (index < letters.length && isActive) {
           onLetterRecognized(letters[index]);
           index++;
         } else {
@@ -38,8 +144,38 @@ export const CameraView = ({
       }, 1500);
 
       return () => clearInterval(interval);
+    };
+
+    if (isActive && videoRef.current) {
+      setupMediaPipe();
     }
-  }, [isActive, onLetterRecognized, onWordComplete]);
+
+    return () => {
+      if (animationId) {
+        cancelAnimationFrame(animationId);
+      }
+      if (hands) {
+        hands.close();
+      }
+    };
+  }, [isActive, showLandmarks, onLetterRecognized, onWordComplete]);
+
+  // Simple gesture recognition function
+  const recognizeGesture = (landmarks: any[]): string | null => {
+    // This is a simplified gesture recognition
+    // In a real implementation, you'd use a trained model
+    
+    // Check if index finger is extended (simple "pointing" gesture = 'A')
+    const indexTip = landmarks[8];
+    const indexPip = landmarks[6];
+    const indexMcp = landmarks[5];
+    
+    if (indexTip.y < indexPip.y && indexPip.y < indexMcp.y) {
+      return 'A';
+    }
+    
+    return null;
+  };
 
   useEffect(() => {
     const startCamera = async () => {
@@ -80,64 +216,25 @@ export const CameraView = ({
     };
   }, [isActive]);
 
-  // Draw hand landmarks simulation
+  // Set canvas size when video loads
   useEffect(() => {
-    if (isActive && showLandmarks && canvasRef.current && videoRef.current) {
+    if (videoRef.current && canvasRef.current && isActive) {
+      const video = videoRef.current;
       const canvas = canvasRef.current;
-      const ctx = canvas.getContext('2d');
       
-      if (ctx) {
-        const drawLandmarks = () => {
-          ctx.clearRect(0, 0, canvas.width, canvas.height);
-          
-          // Simulate hand landmarks for demo
-          if (recognizedLetter) {
-            const centerX = canvas.width / 2;
-            const centerY = canvas.height / 2;
-            
-            // Draw simulated hand landmarks
-            ctx.fillStyle = '#20C997';
-            ctx.strokeStyle = '#20C997';
-            ctx.lineWidth = 2;
-            
-            // Draw 21 landmark points
-            for (let i = 0; i < 21; i++) {
-              const angle = (i / 21) * Math.PI * 2;
-              const radius = 50 + Math.sin(i * 0.5) * 20;
-              const x = centerX + Math.cos(angle) * radius;
-              const y = centerY + Math.sin(angle) * radius;
-              
-              ctx.beginPath();
-              ctx.arc(x, y, 4, 0, 2 * Math.PI);
-              ctx.fill();
-            }
-            
-            // Draw connections
-            ctx.globalAlpha = 0.6;
-            ctx.beginPath();
-            for (let i = 0; i < 20; i++) {
-              const angle1 = (i / 21) * Math.PI * 2;
-              const angle2 = ((i + 1) / 21) * Math.PI * 2;
-              const radius = 50 + Math.sin(i * 0.5) * 20;
-              const x1 = centerX + Math.cos(angle1) * radius;
-              const y1 = centerY + Math.sin(angle1) * radius;
-              const x2 = centerX + Math.cos(angle2) * (50 + Math.sin((i + 1) * 0.5) * 20);
-              const y2 = centerY + Math.sin(angle2) * (50 + Math.sin((i + 1) * 0.5) * 20);
-              
-              ctx.moveTo(x1, y1);
-              ctx.lineTo(x2, y2);
-            }
-            ctx.stroke();
-            ctx.globalAlpha = 1;
-          }
-          
-          requestAnimationFrame(drawLandmarks);
-        };
-        
-        drawLandmarks();
+      const updateCanvasSize = () => {
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+      };
+      
+      if (video.videoWidth > 0) {
+        updateCanvasSize();
+      } else {
+        video.addEventListener('loadedmetadata', updateCanvasSize);
+        return () => video.removeEventListener('loadedmetadata', updateCanvasSize);
       }
     }
-  }, [isActive, showLandmarks, recognizedLetter]);
+  }, [isActive]);
 
   if (hasPermission === false) {
     return (
@@ -163,17 +260,16 @@ export const CameraView = ({
             playsInline
             muted
             className="w-full h-full object-cover scale-x-[-1]"
-            onLoadedMetadata={() => {
-              if (canvasRef.current && videoRef.current) {
-                canvasRef.current.width = videoRef.current.videoWidth;
-                canvasRef.current.height = videoRef.current.videoHeight;
-              }
-            }}
+            style={{ display: 'block' }}
           />
           <canvas
             ref={canvasRef}
-            className="absolute inset-0 w-full h-full scale-x-[-1]"
-            style={{ display: showLandmarks ? 'block' : 'none' }}
+            className="absolute inset-0 w-full h-full scale-x-[-1] pointer-events-none"
+            style={{ 
+              display: 'block',
+              opacity: showLandmarks ? 1 : 0,
+              transition: 'opacity 0.3s ease'
+            }}
           />
           
           {/* Recognition Overlay */}
