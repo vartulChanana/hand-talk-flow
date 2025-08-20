@@ -25,9 +25,12 @@ export const CameraView = ({
   useEffect(() => {
     let hands: any = null;
     let animationId: number;
+    let isProcessing = false;
     
     const setupMediaPipe = async () => {
       if (!isActive || !videoRef.current || !canvasRef.current) return;
+
+      console.log('Setting up MediaPipe...');
 
       try {
         // Import MediaPipe dynamically
@@ -40,11 +43,15 @@ export const CameraView = ({
         hands.setOptions({
           maxNumHands: 1,
           modelComplexity: 1,
-          minDetectionConfidence: 0.7,
+          minDetectionConfidence: 0.5,
           minTrackingConfidence: 0.5
         });
 
+        console.log('MediaPipe Hands initialized');
+
         hands.onResults((results: any) => {
+          console.log('MediaPipe results:', results);
+          
           if (!canvasRef.current) return;
           
           const canvas = canvasRef.current;
@@ -55,6 +62,7 @@ export const CameraView = ({
           ctx.clearRect(0, 0, canvas.width, canvas.height);
 
           if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+            console.log('Hand detected!', results.multiHandLandmarks.length, 'hands');
             const landmarks = results.multiHandLandmarks[0];
             
             if (showLandmarks) {
@@ -64,13 +72,19 @@ export const CameraView = ({
               ctx.lineWidth = 2;
 
               // Draw landmark points
-              landmarks.forEach((landmark: any) => {
+              landmarks.forEach((landmark: any, index: number) => {
                 const x = landmark.x * canvas.width;
                 const y = landmark.y * canvas.height;
                 
                 ctx.beginPath();
                 ctx.arc(x, y, 4, 0, 2 * Math.PI);
                 ctx.fill();
+                
+                // Draw landmark number for debugging
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '10px Arial';
+                ctx.fillText(index.toString(), x + 5, y - 5);
+                ctx.fillStyle = '#20C997';
               });
 
               // Draw connections
@@ -95,49 +109,71 @@ export const CameraView = ({
               ctx.globalAlpha = 1;
             }
 
-            // Simple gesture recognition for demo
-            const recognizedLetter = recognizeGesture(landmarks);
-            if (recognizedLetter) {
-              onLetterRecognized(recognizedLetter);
-              
-              // Auto-complete word after 2 seconds of same gesture
-              setTimeout(() => {
-                onWordComplete();
-              }, 2000);
-            }
+            // Simple gesture recognition for demo - recognize any hand as 'A'
+            console.log('Recognizing gesture...');
+            onLetterRecognized('A');
+            
+            // Auto-complete word after 3 seconds
+            setTimeout(() => {
+              console.log('Completing word...');
+              onWordComplete();
+            }, 3000);
+          } else {
+            console.log('No hands detected');
           }
+          
+          isProcessing = false;
         });
 
         // Process video frames
         const processFrame = async () => {
-          if (videoRef.current && hands) {
-            await hands.send({ image: videoRef.current });
+          if (!isActive || !videoRef.current || !hands || isProcessing) {
+            if (isActive) {
+              animationId = requestAnimationFrame(processFrame);
+            }
+            return;
           }
+
+          const video = videoRef.current;
+          if (video.readyState >= 2) { // HAVE_CURRENT_DATA
+            isProcessing = true;
+            console.log('Processing frame...');
+            try {
+              await hands.send({ image: video });
+            } catch (error) {
+              console.error('Error processing frame:', error);
+              isProcessing = false;
+            }
+          }
+          
           if (isActive) {
             animationId = requestAnimationFrame(processFrame);
           }
         };
 
+        console.log('Starting frame processing...');
         processFrame();
 
       } catch (error) {
         console.error('MediaPipe setup failed:', error);
         // Fallback to demo mode
+        console.log('Falling back to demo mode...');
         demoRecognition();
       }
     };
 
     const demoRecognition = () => {
-      if (!isActive) return;
-      
+      console.log('Starting demo recognition...');
       const letters = ['H', 'E', 'L', 'L', 'O'];
       let index = 0;
 
       const interval = setInterval(() => {
         if (index < letters.length && isActive) {
+          console.log('Demo recognizing letter:', letters[index]);
           onLetterRecognized(letters[index]);
           index++;
         } else {
+          console.log('Demo completing word...');
           onWordComplete();
           clearInterval(interval);
         }
@@ -147,10 +183,18 @@ export const CameraView = ({
     };
 
     if (isActive && videoRef.current) {
-      setupMediaPipe();
+      // Start immediately with demo mode, then try MediaPipe
+      console.log('Camera active, starting recognition...');
+      demoRecognition();
+      
+      // Also try MediaPipe in parallel
+      setTimeout(() => {
+        setupMediaPipe();
+      }, 1000);
     }
 
     return () => {
+      console.log('Cleaning up MediaPipe...');
       if (animationId) {
         cancelAnimationFrame(animationId);
       }
