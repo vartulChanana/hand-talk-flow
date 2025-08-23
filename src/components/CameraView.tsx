@@ -1,5 +1,6 @@
 import { useRef, useEffect, useState } from 'react';
 import { Camera, CameraOff } from 'lucide-react';
+import { Hands, Results } from '@mediapipe/hands';
 
 interface CameraViewProps {
   isActive: boolean;
@@ -20,175 +21,163 @@ export const CameraView = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
+  const [hands, setHands] = useState<Hands | null>(null);
+  const [handDetected, setHandDetected] = useState(false);
 
-  // Simplified ASL recognition with working demo
+  // Initialize MediaPipe Hands
   useEffect(() => {
-    let demoInterval: NodeJS.Timeout;
-    let currentLetterIndex = 0;
-    const demoLetters = ['H', 'E', 'L', 'L', 'O'];
+    if (!isActive) return;
 
-    if (isActive) {
-      console.log('Camera active, starting demo recognition...');
-      
-      // Start demo recognition immediately
-      demoInterval = setInterval(() => {
-        if (currentLetterIndex < demoLetters.length) {
-          const letter = demoLetters[currentLetterIndex];
-          console.log('Demo recognizing letter:', letter);
-          onLetterRecognized(letter);
-          currentLetterIndex++;
-        } else {
-          console.log('Demo completing word...');
-          onWordComplete();
-          clearInterval(demoInterval);
+    const initializeHands = async () => {
+      const handsInstance = new Hands({
+        locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+      });
+
+      handsInstance.setOptions({
+        maxNumHands: 1,
+        modelComplexity: 1,
+        minDetectionConfidence: 0.7,
+        minTrackingConfidence: 0.5,
+      });
+
+      handsInstance.onResults((results: Results) => {
+        setHandDetected(results.multiHandLandmarks && results.multiHandLandmarks.length > 0);
+        
+        if (canvasRef.current && videoRef.current) {
+          const canvas = canvasRef.current;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return;
+
+          // Set canvas size to match video
+          canvas.width = videoRef.current.videoWidth;
+          canvas.height = videoRef.current.videoHeight;
           
-          // Reset for next demo cycle
-          setTimeout(() => {
-            currentLetterIndex = 0;
-            if (isActive) {
-              // Restart demo
-              const restartInterval = setInterval(() => {
-                if (currentLetterIndex < demoLetters.length && isActive) {
-                  const letter = demoLetters[currentLetterIndex];
-                  onLetterRecognized(letter);
-                  currentLetterIndex++;
-                } else {
-                  onWordComplete();
-                  clearInterval(restartInterval);
-                  currentLetterIndex = 0;
-                }
-              }, 1500);
+          // Clear canvas
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+          if (results.multiHandLandmarks && showLandmarks) {
+            for (const landmarks of results.multiHandLandmarks) {
+              // Draw landmarks
+              ctx.fillStyle = '#20C997';
+              ctx.strokeStyle = '#20C997';
+              ctx.lineWidth = 2;
+
+              // Draw hand landmarks
+              landmarks.forEach((landmark, index) => {
+                const x = landmark.x * canvas.width;
+                const y = landmark.y * canvas.height;
+                
+                ctx.beginPath();
+                ctx.arc(x, y, 4, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                // Draw landmark number
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '10px Arial';
+                ctx.fillText(index.toString(), x + 5, y - 5);
+                ctx.fillStyle = '#20C997';
+              });
+
+              // Draw connections
+              const connections = [
+                [0, 1], [1, 2], [2, 3], [3, 4], // Thumb
+                [0, 5], [5, 6], [6, 7], [7, 8], // Index
+                [0, 9], [9, 10], [10, 11], [11, 12], // Middle  
+                [0, 13], [13, 14], [14, 15], [15, 16], // Ring
+                [0, 17], [17, 18], [18, 19], [19, 20], // Pinky
+                [5, 9], [9, 13], [13, 17] // Palm
+              ];
+
+              ctx.globalAlpha = 0.6;
+              ctx.beginPath();
+              connections.forEach(([start, end]) => {
+                const startX = landmarks[start].x * canvas.width;
+                const startY = landmarks[start].y * canvas.height;
+                const endX = landmarks[end].x * canvas.width;
+                const endY = landmarks[end].y * canvas.height;
+                ctx.moveTo(startX, startY);
+                ctx.lineTo(endX, endY);
+              });
+              ctx.stroke();
+              ctx.globalAlpha = 1;
+
+              // Simple gesture recognition
+              const recognizedGesture = recognizeGesture(landmarks);
+              if (recognizedGesture) {
+                onLetterRecognized(recognizedGesture);
+              }
             }
-          }, 3000);
+          }
         }
-      }, 1500);
-    }
+      });
+
+      setHands(handsInstance);
+    };
+
+    initializeHands();
 
     return () => {
-      if (demoInterval) {
-        clearInterval(demoInterval);
+      if (hands) {
+        hands.close();
       }
     };
-  }, [isActive, onLetterRecognized, onWordComplete]);
-
-  // Canvas setup for landmarks visualization
-  useEffect(() => {
-    if (!isActive || !canvasRef.current) return;
-
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    // Demo landmarks animation
-    const drawDemoLandmarks = () => {
-      if (!showLandmarks) return;
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
-      // Draw sample hand landmarks for demo
-      const centerX = canvas.width * 0.5;
-      const centerY = canvas.height * 0.5;
-      
-      // Simple hand shape with 21 landmarks
-      const landmarks = [
-        // Wrist
-        [centerX, centerY + 100],
-        // Thumb
-        [centerX - 80, centerY + 60],
-        [centerX - 90, centerY + 20],
-        [centerX - 95, centerY - 10],
-        [centerX - 100, centerY - 40],
-        // Index finger
-        [centerX - 40, centerY + 80],
-        [centerX - 30, centerY + 40],
-        [centerX - 25, centerY],
-        [centerX - 20, centerY - 40],
-        // Middle finger
-        [centerX, centerY + 85],
-        [centerX + 5, centerY + 45],
-        [centerX + 10, centerY],
-        [centerX + 15, centerY - 45],
-        // Ring finger
-        [centerX + 40, centerY + 80],
-        [centerX + 45, centerY + 40],
-        [centerX + 50, centerY],
-        [centerX + 55, centerY - 35],
-        // Pinky
-        [centerX + 80, centerY + 70],
-        [centerX + 85, centerY + 35],
-        [centerX + 90, centerY],
-        [centerX + 95, centerY - 25]
-      ];
-
-      // Draw landmarks
-      ctx.fillStyle = '#20C997';
-      ctx.strokeStyle = '#20C997';
-      ctx.lineWidth = 2;
-
-      landmarks.forEach(([x, y], index) => {
-        ctx.beginPath();
-        ctx.arc(x, y, 4, 0, 2 * Math.PI);
-        ctx.fill();
-        
-        // Draw landmark number
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '10px Arial';
-        ctx.fillText(index.toString(), x + 5, y - 5);
-        ctx.fillStyle = '#20C997';
-      });
-
-      // Draw connections
-      const connections = [
-        [0, 1], [1, 2], [2, 3], [3, 4], // Thumb
-        [0, 5], [5, 6], [6, 7], [7, 8], // Index
-        [0, 9], [9, 10], [10, 11], [11, 12], // Middle  
-        [0, 13], [13, 14], [14, 15], [15, 16], // Ring
-        [0, 17], [17, 18], [18, 19], [19, 20], // Pinky
-        [5, 9], [9, 13], [13, 17] // Palm
-      ];
-
-      ctx.globalAlpha = 0.6;
-      ctx.beginPath();
-      connections.forEach(([start, end]) => {
-        const [startX, startY] = landmarks[start];
-        const [endX, endY] = landmarks[end];
-        ctx.moveTo(startX, startY);
-        ctx.lineTo(endX, endY);
-      });
-      ctx.stroke();
-      ctx.globalAlpha = 1;
-    };
-
-    // Animate landmarks with slight movement
-    const animate = () => {
-      if (isActive && showLandmarks) {
-        drawDemoLandmarks();
-        requestAnimationFrame(animate);
-      }
-    };
-
-    if (showLandmarks) {
-      animate();
-    }
-
   }, [isActive, showLandmarks]);
 
-  // Simple gesture recognition function
+  // Process video frames
+  useEffect(() => {
+    if (!hands || !isActive || !videoRef.current) return;
+
+    const processFrame = async () => {
+      if (videoRef.current && videoRef.current.videoWidth > 0) {
+        await hands.send({ image: videoRef.current });
+      }
+      requestAnimationFrame(processFrame);
+    };
+
+    const startProcessing = () => {
+      if (videoRef.current && videoRef.current.readyState >= 2) {
+        processFrame();
+      } else {
+        videoRef.current?.addEventListener('loadeddata', processFrame, { once: true });
+      }
+    };
+
+    startProcessing();
+  }, [hands, isActive]);
+
+  // Real-time gesture recognition function
   const recognizeGesture = (landmarks: any[]): string | null => {
-    // This is a simplified gesture recognition
-    // In a real implementation, you'd use a trained model
-    
-    // Check if index finger is extended (simple "pointing" gesture = 'A')
+    if (!landmarks || landmarks.length === 0) return null;
+
+    // Get key landmarks for gesture recognition
+    const thumbTip = landmarks[4];
     const indexTip = landmarks[8];
-    const indexPip = landmarks[6];
-    const indexMcp = landmarks[5];
-    
-    if (indexTip.y < indexPip.y && indexPip.y < indexMcp.y) {
-      return 'A';
-    }
-    
+    const middleTip = landmarks[12];
+    const ringTip = landmarks[16];
+    const pinkyTip = landmarks[20];
+    const wrist = landmarks[0];
+
+    // Simple gesture recognition based on finger positions
+    const fingersUp = [
+      thumbTip.y < landmarks[3].y, // Thumb
+      indexTip.y < landmarks[6].y, // Index
+      middleTip.y < landmarks[10].y, // Middle
+      ringTip.y < landmarks[14].y, // Ring
+      pinkyTip.y < landmarks[18].y  // Pinky
+    ];
+
+    const upCount = fingersUp.filter(Boolean).length;
+
+    // Basic gesture mapping
+    if (upCount === 0) return 'A'; // Fist
+    if (upCount === 1 && fingersUp[1]) return 'D'; // Index finger up
+    if (upCount === 2 && fingersUp[1] && fingersUp[2]) return 'V'; // Peace sign
+    if (upCount === 5) return 'B'; // Open hand
+    if (upCount === 3 && fingersUp[1] && fingersUp[2] && fingersUp[3]) return 'W';
+
     return null;
   };
+
 
   useEffect(() => {
     const startCamera = async () => {
@@ -229,25 +218,6 @@ export const CameraView = ({
     };
   }, [isActive]);
 
-  // Set canvas size when video loads
-  useEffect(() => {
-    if (videoRef.current && canvasRef.current && isActive) {
-      const video = videoRef.current;
-      const canvas = canvasRef.current;
-      
-      const updateCanvasSize = () => {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-      };
-      
-      if (video.videoWidth > 0) {
-        updateCanvasSize();
-      } else {
-        video.addEventListener('loadedmetadata', updateCanvasSize);
-        return () => video.removeEventListener('loadedmetadata', updateCanvasSize);
-      }
-    }
-  }, [isActive]);
 
   if (hasPermission === false) {
     return (
@@ -302,17 +272,17 @@ export const CameraView = ({
             </div>
           )}
           
-          {/* Landmarks Toggle Indicator */}
-          {showLandmarks && (
-            <div className="absolute top-6 right-6 animate-fade-in">
-              <div className="bg-gradient-glass backdrop-blur-sm border border-teal/20 px-3 py-2 rounded-xl">
-                <div className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-teal rounded-full animate-pulse"></div>
-                  <span className="text-xs text-teal font-medium">Hand Tracking</span>
-                </div>
+          {/* Hand Detection Status */}
+          <div className="absolute top-6 right-6 animate-fade-in">
+            <div className="bg-gradient-glass backdrop-blur-sm border border-teal/20 px-3 py-2 rounded-xl">
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full animate-pulse ${handDetected ? 'bg-teal' : 'bg-muted-foreground'}`}></div>
+                <span className={`text-xs font-medium ${handDetected ? 'text-teal' : 'text-muted-foreground'}`}>
+                  {handDetected ? 'Hand Detected' : 'No Hand'}
+                </span>
               </div>
             </div>
-          )}
+          </div>
           
           {/* Corner Indicators */}
           <div className="absolute inset-4 pointer-events-none">
