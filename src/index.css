@@ -45,20 +45,31 @@ All colors MUST be HSL.
     --off-white: 0 0% 92%;
     --teal: 162 78% 46%;
     --teal-glow: 162 78% 56%;
+    --teal-light: 162 68% 65%;
     --dark-panel: 0 0% 12%;
     --darker-panel: 0 0% 8%;
+    --glass-bg: 0 0% 15%;
+    --glass-border: 0 0% 25%;
     
-    /* Gradients */
+    /* Modern Gradients */
     --gradient-primary: linear-gradient(135deg, hsl(var(--teal)), hsl(var(--teal-glow)));
     --gradient-panel: linear-gradient(180deg, hsl(var(--dark-panel)), hsl(var(--darker-panel)));
+    --gradient-glass: linear-gradient(135deg, hsl(var(--glass-bg) / 0.8), hsl(var(--glass-bg) / 0.4));
+    --gradient-hero: linear-gradient(135deg, hsl(var(--background)), hsl(var(--dark-panel)));
+    --gradient-mesh: radial-gradient(circle at 20% 80%, hsl(var(--teal) / 0.15) 0%, transparent 50%),
+                     radial-gradient(circle at 80% 20%, hsl(var(--teal-glow) / 0.1) 0%, transparent 50%),
+                     radial-gradient(circle at 40% 40%, hsl(var(--teal-light) / 0.08) 0%, transparent 50%);
     
-    /* Shadows */
-    --shadow-glow: 0 0 30px hsl(var(--teal) / 0.3);
-    --shadow-card: 0 8px 32px hsl(0 0% 0% / 0.3);
+    /* Modern Shadows */
+    --shadow-glow: 0 0 40px hsl(var(--teal) / 0.4);
+    --shadow-card: 0 20px 40px hsl(0 0% 0% / 0.4);
+    --shadow-glass: 0 8px 32px hsl(0 0% 0% / 0.4), inset 0 1px 0 hsl(0 0% 100% / 0.1);
+    --shadow-camera: 0 25px 50px hsl(0 0% 0% / 0.5), 0 0 0 1px hsl(var(--teal) / 0.3);
     
     /* Animations */
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    --transition-spring: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   }
 }
 

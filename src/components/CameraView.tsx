@@ -264,41 +264,79 @@ export const CameraView = ({
   }
 
   return (
-    <div className="relative aspect-video bg-darker-panel overflow-hidden">
+    <div className="relative aspect-video bg-gradient-to-br from-darker-panel to-dark-panel overflow-hidden">
       {isActive ? (
         <>
+          {/* Video Feed */}
           <video
             ref={videoRef}
             autoPlay
             playsInline
             muted
-            className="w-full h-full object-cover scale-x-[-1]"
+            className="w-full h-full object-cover scale-x-[-1] transition-all duration-500"
             style={{ display: 'block' }}
           />
+          
+          {/* Enhanced Canvas with better integration */}
           <canvas
             ref={canvasRef}
-            className="absolute inset-0 w-full h-full scale-x-[-1] pointer-events-none"
+            className="absolute inset-0 w-full h-full scale-x-[-1] pointer-events-none transition-all duration-500"
             style={{ 
               display: 'block',
-              opacity: showLandmarks ? 1 : 0,
-              transition: 'opacity 0.3s ease'
+              opacity: showLandmarks ? 0.9 : 0,
+              filter: showLandmarks ? 'drop-shadow(0 0 8px hsl(var(--teal) / 0.5))' : 'none'
             }}
           />
           
-          {/* Recognition Overlay */}
+          {/* Modern Recognition Overlay */}
           {recognizedLetter && (
-            <div className="absolute top-4 left-4 bg-primary text-primary-foreground px-4 py-2 rounded-lg font-bold text-2xl shadow-glow">
-              {recognizedLetter}
+            <div className="absolute top-6 left-6 animate-scale-in">
+              <div className="bg-gradient-glass backdrop-blur-xl border border-teal/30 px-6 py-3 rounded-2xl shadow-glass">
+                <div className="flex items-center gap-3">
+                  <div className="w-3 h-3 bg-gradient-primary rounded-full animate-glow-pulse"></div>
+                  <span className="font-bold text-3xl bg-gradient-primary bg-clip-text text-transparent">
+                    {recognizedLetter}
+                  </span>
+                </div>
+              </div>
             </div>
           )}
+          
+          {/* Landmarks Toggle Indicator */}
+          {showLandmarks && (
+            <div className="absolute top-6 right-6 animate-fade-in">
+              <div className="bg-gradient-glass backdrop-blur-sm border border-teal/20 px-3 py-2 rounded-xl">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-teal rounded-full animate-pulse"></div>
+                  <span className="text-xs text-teal font-medium">Hand Tracking</span>
+                </div>
+              </div>
+            </div>
+          )}
+          
+          {/* Corner Indicators */}
+          <div className="absolute inset-4 pointer-events-none">
+            <div className="w-full h-full relative">
+              {/* Top corners */}
+              <div className="absolute top-0 left-0 w-8 h-8 border-l-2 border-t-2 border-teal/40 rounded-tl-lg"></div>
+              <div className="absolute top-0 right-0 w-8 h-8 border-r-2 border-t-2 border-teal/40 rounded-tr-lg"></div>
+              {/* Bottom corners */}
+              <div className="absolute bottom-0 left-0 w-8 h-8 border-l-2 border-b-2 border-teal/40 rounded-bl-lg"></div>
+              <div className="absolute bottom-0 right-0 w-8 h-8 border-r-2 border-b-2 border-teal/40 rounded-br-lg"></div>
+            </div>
+          </div>
         </>
       ) : (
-        <div className="flex items-center justify-center h-full">
-          <div className="text-center">
-            <Camera className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Camera Ready</h3>
-            <p className="text-muted-foreground">
-              Click "Start Camera" to begin ASL recognition
+        <div className="flex items-center justify-center h-full animate-fade-in">
+          <div className="text-center p-8">
+            <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-glass backdrop-blur-sm rounded-2xl border border-glass-border/20 mb-6 animate-float">
+              <Camera className="w-10 h-10 text-teal" />
+            </div>
+            <h3 className="text-xl font-semibold mb-3 bg-gradient-primary bg-clip-text text-transparent">
+              Camera Ready
+            </h3>
+            <p className="text-muted-foreground max-w-sm mx-auto leading-relaxed">
+              Click "Start Camera" to begin real-time ASL recognition with advanced hand tracking
             </p>
           </div>
         </div>
