@@ -289,14 +289,14 @@ export const CameraView = ({
             autoPlay
             playsInline
             muted
-            className="w-full h-full object-cover scale-x-[-1] transition-all duration-500"
+            className="w-full h-full object-cover scale-x-[-1]"
             style={{ display: 'block' }}
           />
           
           {/* Enhanced Canvas with better integration */}
           <canvas
             ref={canvasRef}
-            className="absolute inset-0 w-full h-full scale-x-[-1] pointer-events-none transition-all duration-500"
+            className="absolute inset-0 w-full h-full scale-x-[-1] pointer-events-none"
             style={{ 
               display: 'block',
               opacity: showLandmarks ? 0.9 : 0,
@@ -306,10 +306,10 @@ export const CameraView = ({
           
           {/* Modern Recognition Overlay */}
           {recognizedLetter && (
-            <div className="absolute top-6 left-6 animate-scale-in">
+            <div className="absolute top-6 left-6 animate-fade-in">
               <div className="bg-gradient-glass backdrop-blur-xl border border-teal/30 px-6 py-3 rounded-2xl shadow-glass">
                 <div className="flex items-center gap-3">
-                  <div className="w-3 h-3 bg-gradient-primary rounded-full animate-glow-pulse"></div>
+                  <div className="w-3 h-3 bg-gradient-primary rounded-full animate-pulse"></div>
                   <span className="font-bold text-3xl bg-gradient-primary bg-clip-text text-transparent">
                     {recognizedLetter}
                   </span>
