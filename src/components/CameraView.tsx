@@ -74,9 +74,10 @@ export const CameraView = ({
             const ctx = canvas.getContext('2d');
             if (!ctx) return;
 
-            // Set canvas size to match video
-            canvas.width = videoRef.current.videoWidth;
-            canvas.height = videoRef.current.videoHeight;
+            // Set canvas size to match video dimensions
+            const videoRect = videoRef.current.getBoundingClientRect();
+            canvas.width = videoRef.current.videoWidth || 640;
+            canvas.height = videoRef.current.videoHeight || 480;
             
             // Clear canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -303,7 +304,7 @@ export const CameraView = ({
   }
 
   return (
-    <div className="relative aspect-video bg-gradient-to-br from-darker-panel to-dark-panel overflow-hidden">
+    <div className="relative aspect-video bg-gradient-to-br from-darker-panel to-dark-panel overflow-hidden rounded-xl">
       {isActive ? (
         <>
           {/* Video Feed */}
@@ -312,18 +313,15 @@ export const CameraView = ({
             autoPlay
             playsInline
             muted
-            className="w-full h-full object-cover scale-x-[-1]"
-            style={{ display: 'block' }}
+            className="absolute inset-0 w-full h-full object-cover scale-x-[-1]"
           />
           
-          {/* Enhanced Canvas with better integration */}
+          {/* Canvas Overlay */}
           <canvas
             ref={canvasRef}
             className="absolute inset-0 w-full h-full scale-x-[-1] pointer-events-none"
             style={{ 
-              display: 'block',
-              opacity: showLandmarks ? 0.9 : 0,
-              filter: showLandmarks ? 'drop-shadow(0 0 8px hsl(var(--teal) / 0.5))' : 'none'
+              opacity: showLandmarks ? 0.9 : 0
             }}
           />
           
