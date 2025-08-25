@@ -44,6 +44,8 @@ export const CameraView = ({
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [hands, setHands] = useState<any | null>(null);
   const [handDetected, setHandDetected] = useState(false);
+  const [lastRecognizedLetter, setLastRecognizedLetter] = useState<string | null>(null);
+  const [lastRecognitionTime, setLastRecognitionTime] = useState<number>(0);
 
   // Initialize MediaPipe Hands with script loading
   useEffect(() => {
@@ -131,10 +133,18 @@ export const CameraView = ({
                 ctx.stroke();
                 ctx.globalAlpha = 1;
 
-                // Enhanced gesture recognition
+                // Enhanced gesture recognition with debouncing
                 const recognizedGesture = recognizeGesture(landmarks);
                 if (recognizedGesture) {
-                  onLetterRecognized(recognizedGesture);
+                  const currentTime = Date.now();
+                  const timeSinceLastRecognition = currentTime - lastRecognitionTime;
+                  
+                  // Only recognize if it's a different letter or enough time has passed (1 second)
+                  if (recognizedGesture !== lastRecognizedLetter || timeSinceLastRecognition > 1000) {
+                    onLetterRecognized(recognizedGesture);
+                    setLastRecognizedLetter(recognizedGesture);
+                    setLastRecognitionTime(currentTime);
+                  }
                 }
               }
             }
