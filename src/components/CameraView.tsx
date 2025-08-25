@@ -1,6 +1,28 @@
 import { useRef, useEffect, useState } from 'react';
 import { Camera, CameraOff } from 'lucide-react';
 
+// Add MediaPipe script loading
+const loadMediaPipe = () => {
+  return new Promise((resolve, reject) => {
+    if ((window as any).Hands) {
+      resolve((window as any).Hands);
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js';
+    script.onload = () => {
+      if ((window as any).Hands) {
+        resolve((window as any).Hands);
+      } else {
+        reject(new Error('MediaPipe Hands not loaded'));
+      }
+    };
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+};
+
 interface CameraViewProps {
   isActive: boolean;
   showLandmarks: boolean;
@@ -23,17 +45,17 @@ export const CameraView = ({
   const [hands, setHands] = useState<any | null>(null);
   const [handDetected, setHandDetected] = useState(false);
 
-  // Initialize MediaPipe Hands with proper import handling
+  // Initialize MediaPipe Hands with script loading
   useEffect(() => {
     if (!isActive) return;
 
     const initializeHands = async () => {
       try {
-        // Dynamic import to handle MediaPipe properly
-        const { Hands } = await import('@mediapipe/hands');
+        // Load MediaPipe from CDN
+        const Hands = await loadMediaPipe();
         
-        const handsInstance = new Hands({
-          locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+        const handsInstance = new (Hands as any)({
+          locateFile: (file: string) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
         });
 
         handsInstance.setOptions({
@@ -43,7 +65,7 @@ export const CameraView = ({
           minTrackingConfidence: 0.3,
         });
 
-        handsInstance.onResults((results) => {
+        handsInstance.onResults((results: any) => {
           const hasHands = results.multiHandLandmarks && results.multiHandLandmarks.length > 0;
           setHandDetected(hasHands);
           
@@ -67,7 +89,7 @@ export const CameraView = ({
                 ctx.lineWidth = 3;
 
                 // Draw hand landmarks
-                landmarks.forEach((landmark, index) => {
+                landmarks.forEach((landmark: any, index: number) => {
                   const x = landmark.x * canvas.width;
                   const y = landmark.y * canvas.height;
                   
@@ -119,6 +141,7 @@ export const CameraView = ({
         });
 
         setHands(handsInstance);
+        console.log('MediaPipe Hands initialized successfully');
       } catch (error) {
         console.error('Failed to initialize MediaPipe Hands:', error);
         setHandDetected(false);
