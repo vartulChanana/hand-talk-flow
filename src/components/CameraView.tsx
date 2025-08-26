@@ -132,17 +132,16 @@ export const CameraView = ({
                 ctx.stroke();
                 ctx.globalAlpha = 1;
 
-                // Enhanced gesture recognition - only trigger on sign change
+                // Enhanced gesture recognition - stable single recognition per gesture
                 const recognizedGesture = recognizeGesture(landmarks);
                 
-                // Only recognize when the sign changes (different from last recognized)
+                // Only trigger when a NEW different gesture is detected
                 if (recognizedGesture && recognizedGesture !== lastRecognizedLetter) {
                   onLetterRecognized(recognizedGesture);
                   setLastRecognizedLetter(recognizedGesture);
-                } else if (!recognizedGesture) {
-                  // Reset when no gesture is detected, allowing the same letter to be recognized again
-                  setLastRecognizedLetter(null);
                 }
+                // Don't reset lastRecognizedLetter when no gesture is detected
+                // This prevents re-triggering the same gesture due to intermittent detection
               }
             }
           }
