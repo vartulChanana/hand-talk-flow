@@ -1,9 +1,11 @@
+
 import { useState, useEffect } from 'react';
 import { CameraView } from '@/components/CameraView';
 import { TranslationPanel } from '@/components/TranslationPanel';
 import { ControlBar } from '@/components/ControlBar';
 import { StatusIndicator } from '@/components/StatusIndicator';
 import { useToast } from '@/hooks/use-toast';
+import { Sparkles, Zap, Brain } from 'lucide-react';
 
 export type AppStatus = 'LOADING' | 'READY' | 'RECOGNIZING' | 'ERROR';
 
@@ -17,21 +19,19 @@ const Index = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Simulate model loading
     const loadModels = async () => {
       try {
         setAppStatus('LOADING');
-        // Simulate loading time
         await new Promise(resolve => setTimeout(resolve, 2000));
         setAppStatus('READY');
         toast({
-          title: "Vocalize Ready",
-          description: "ASL recognition models loaded successfully!",
+          title: "🚀 Vocalize Ready",
+          description: "AI models loaded successfully. Ready to translate!",
         });
       } catch (error) {
         setAppStatus('ERROR');
         toast({
-          title: "Loading Error",
+          title: "❌ Loading Error",
           description: "Failed to load ASL recognition models.",
           variant: "destructive",
         });
@@ -59,7 +59,6 @@ const Index = () => {
     if (currentWord.trim()) {
       setTranslatedWords(prev => [...prev, currentWord.trim()]);
       
-      // Text-to-speech
       if ('speechSynthesis' in window) {
         const utterance = new SpeechSynthesisUtterance(currentWord.trim());
         utterance.rate = 0.8;
@@ -79,37 +78,58 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-hero bg-gradient-mesh font-inter relative overflow-hidden">
-      {/* Background Elements */}
-      <div className="absolute inset-0 bg-gradient-mesh opacity-50"></div>
-      <div className="absolute top-20 left-20 w-72 h-72 bg-gradient-primary rounded-full opacity-10 blur-3xl animate-float"></div>
-      <div className="absolute bottom-20 right-20 w-96 h-96 bg-gradient-primary rounded-full opacity-5 blur-3xl animate-float" style={{ animationDelay: '1s' }}></div>
-      
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-blue-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute top-3/4 left-1/2 w-64 h-64 bg-pink-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '4s' }}></div>
+      </div>
+
+      {/* Grid Pattern Overlay */}
+      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
+
       <div className="relative z-10">
-        <div className="container mx-auto px-4 py-8">
-          {/* Modern Header */}
-          <div className="text-center mb-12 animate-fade-in">
-            <div className="inline-flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-gradient-primary rounded-xl flex items-center justify-center shadow-glow">
-                <div className="w-6 h-6 bg-white rounded-sm opacity-90"></div>
+        {/* Modern Header */}
+        <header className="pt-16 pb-12">
+          <div className="container mx-auto px-6 text-center">
+            <div className="inline-flex items-center gap-3 mb-8">
+              <div className="relative">
+                <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-2xl">
+                  <Brain className="w-8 h-8 text-white" />
+                </div>
+                <div className="absolute -top-2 -right-2 w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center">
+                  <Sparkles className="w-3 h-3 text-yellow-800" />
+                </div>
               </div>
-              <h1 className="text-5xl font-bold bg-gradient-primary bg-clip-text text-transparent">
-                Vocalize
-              </h1>
+              <div className="text-left">
+                <h1 className="text-6xl font-black bg-gradient-to-r from-white via-purple-200 to-pink-200 bg-clip-text text-transparent tracking-tight">
+                  Vocalize
+                </h1>
+                <div className="flex items-center gap-2 mt-1">
+                  <Zap className="w-4 h-4 text-yellow-400" />
+                  <span className="text-purple-300 text-sm font-medium">AI-Powered Translation</span>
+                </div>
+              </div>
             </div>
-            <p className="text-muted-foreground text-xl max-w-2xl mx-auto leading-relaxed">
-              Experience the future of communication with real-time American Sign Language translation
+
+            <p className="text-xl text-slate-300 max-w-3xl mx-auto leading-relaxed mb-8">
+              Transform American Sign Language into text and speech with cutting-edge AI technology. 
+              <span className="text-purple-300 font-semibold"> Real-time, accurate, accessible.</span>
             </p>
+
             <StatusIndicator status={appStatus} />
           </div>
+        </header>
 
-          {/* Main Layout with Glass Morphism */}
-          <div className="grid lg:grid-cols-5 gap-8 max-w-7xl mx-auto">
-            {/* Camera Panel - Enhanced with glass morphism */}
-            <div className="lg:col-span-3 animate-scale-in">
-              <div className="bg-gradient-glass backdrop-blur-xl rounded-2xl shadow-glass border border-glass-border/20 overflow-hidden">
+        {/* Main Content Grid */}
+        <div className="container mx-auto px-6 pb-16">
+          <div className="grid xl:grid-cols-3 gap-8 max-w-7xl mx-auto">
+            {/* Camera Section - Takes 2 columns */}
+            <div className="xl:col-span-2">
+              <div className="bg-slate-800/50 backdrop-blur-xl rounded-3xl border border-slate-700/50 shadow-2xl overflow-hidden">
                 <div className="p-2">
-                  <div className="rounded-xl overflow-hidden shadow-camera border border-teal/20">
+                  <div className="rounded-2xl overflow-hidden border border-slate-600/30 shadow-xl">
                     <CameraView
                       isActive={isVideoActive}
                       showLandmarks={showLandmarks}
@@ -129,8 +149,8 @@ const Index = () => {
               </div>
             </div>
 
-            {/* Translation Panel - Enhanced styling */}
-            <div className="lg:col-span-2 animate-scale-in" style={{ animationDelay: '0.2s' }}>
+            {/* Translation Panel - Takes 1 column */}
+            <div className="xl:col-span-1">
               <TranslationPanel
                 currentWord={currentWord}
                 translatedWords={translatedWords}
@@ -138,17 +158,19 @@ const Index = () => {
               />
             </div>
           </div>
+        </div>
 
-          {/* Modern Footer */}
-          <div className="text-center mt-16 animate-fade-in" style={{ animationDelay: '0.4s' }}>
-            <div className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-glass backdrop-blur-sm rounded-full border border-glass-border/20">
-              <div className="w-2 h-2 bg-gradient-primary rounded-full animate-glow-pulse"></div>
-              <p className="text-sm text-muted-foreground">
-                Empowering communication through technology • Built with accessibility in mind
+        {/* Modern Footer */}
+        <footer className="pb-16">
+          <div className="container mx-auto px-6 text-center">
+            <div className="inline-flex items-center gap-3 px-8 py-4 bg-slate-800/30 backdrop-blur-sm rounded-full border border-slate-700/50">
+              <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse shadow-lg shadow-green-400/50"></div>
+              <p className="text-slate-300 font-medium">
+                Empowering communication through AI • Built for accessibility
               </p>
             </div>
           </div>
-        </div>
+        </footer>
       </div>
     </div>
   );
