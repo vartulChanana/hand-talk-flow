@@ -5,7 +5,8 @@ import { TranslationPanel } from '@/components/TranslationPanel';
 import { ControlBar } from '@/components/ControlBar';
 import { StatusIndicator } from '@/components/StatusIndicator';
 import { useToast } from '@/hooks/use-toast';
-import { Sparkles, Zap, Brain } from 'lucide-react';
+import { User, Menu, Camera, Mic } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export type AppStatus = 'LOADING' | 'READY' | 'RECOGNIZING' | 'ERROR';
 
@@ -78,67 +79,88 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 relative overflow-hidden">
-      {/* Animated Background Elements */}
-      <div className="absolute inset-0">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-blue-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
-        <div className="absolute top-3/4 left-1/2 w-64 h-64 bg-pink-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '4s' }}></div>
-      </div>
-
-      {/* Grid Pattern Overlay */}
-      <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:50px_50px]"></div>
-
-      <div className="relative z-10">
-        {/* Modern Header */}
-        <header className="pt-16 pb-12">
-          <div className="container mx-auto px-6 text-center">
-            <div className="inline-flex items-center gap-3 mb-8">
-              <div className="relative">
-                <div className="w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-2xl flex items-center justify-center shadow-2xl">
-                  <Brain className="w-8 h-8 text-white" />
-                </div>
-                <div className="absolute -top-2 -right-2 w-6 h-6 bg-yellow-400 rounded-full flex items-center justify-center">
-                  <Sparkles className="w-3 h-3 text-yellow-800" />
-                </div>
-              </div>
-              <div className="text-left">
-                <h1 className="text-6xl font-black bg-gradient-to-r from-white via-purple-200 to-pink-200 bg-clip-text text-transparent tracking-tight">
-                  Vocalize
-                </h1>
-                <div className="flex items-center gap-2 mt-1">
-                  <Zap className="w-4 h-4 text-yellow-400" />
-                  <span className="text-purple-300 text-sm font-medium">AI-Powered Translation</span>
-                </div>
-              </div>
+    <div className="min-h-screen bg-black text-white">
+      {/* Navigation Header */}
+      <nav className="border-b border-white/10">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div className="text-lg font-semibold tracking-wide">
+              VOCALIZE
             </div>
+            <div className="hidden md:flex items-center space-x-8 text-sm uppercase tracking-wider">
+              <a href="#home" className="hover:text-white/70 transition-colors">HOME</a>
+              <a href="#demo" className="hover:text-white/70 transition-colors">DEMO</a>
+              <a href="#about" className="hover:text-white/70 transition-colors">ABOUT</a>
+              <a href="#contact" className="hover:text-white/70 transition-colors">CONTACT</a>
+            </div>
+            <Button variant="outline" size="sm" className="border-white/20 text-white hover:bg-white/10">
+              <User className="w-4 h-4 mr-2" />
+              LOGIN
+            </Button>
+          </div>
+        </div>
+      </nav>
 
-            <p className="text-xl text-slate-300 max-w-3xl mx-auto leading-relaxed mb-8">
-              Transform American Sign Language into text and speech with cutting-edge AI technology. 
-              <span className="text-purple-300 font-semibold"> Real-time, accurate, accessible.</span>
-            </p>
+      {/* Hero Section */}
+      <main className="flex-1">
+        <div className="max-w-7xl mx-auto px-6 py-24 text-center">
+          {/* Main Title */}
+          <h1 className="text-8xl md:text-9xl font-black tracking-tighter mb-8 leading-none">
+            ASL TO SPEECH
+            <br />
+            TRANSLATOR
+          </h1>
 
+          {/* Description */}
+          <p className="text-lg md:text-xl text-white/70 max-w-4xl mx-auto mb-16 leading-relaxed">
+            The ASL translation system is designed to be versatile, with real-time recognition capabilities. 
+            Its ability to detect and translate American Sign Language makes it an invaluable tool for accessibility.
+          </p>
+
+          {/* Status Indicator */}
+          <div className="mb-16">
             <StatusIndicator status={appStatus} />
           </div>
-        </header>
 
-        {/* Main Content Grid */}
-        <div className="container mx-auto px-6 pb-16">
-          <div className="grid xl:grid-cols-3 gap-8 max-w-7xl mx-auto">
+          {/* Action Buttons */}
+          <div className="flex flex-wrap items-center justify-center gap-4 mb-24">
+            <Button 
+              variant="outline" 
+              size="lg"
+              className="border-white/20 text-white hover:bg-white/10 px-8 py-3 text-sm uppercase tracking-widest"
+            >
+              <Camera className="w-4 h-4 mr-2" />
+              CAMERA
+            </Button>
+            <Button 
+              variant="outline" 
+              size="lg"
+              className="border-white/20 text-white hover:bg-white/10 px-8 py-3 text-sm uppercase tracking-widest"
+            >
+              TRANSLATION
+            </Button>
+            <Button 
+              variant="outline" 
+              size="lg"
+              className="border-white/20 text-white hover:bg-white/10 px-8 py-3 text-sm uppercase tracking-widest"
+            >
+              <Mic className="w-4 h-4 mr-2" />
+              SPEECH
+            </Button>
+          </div>
+
+          {/* Main Content Grid */}
+          <div className="grid xl:grid-cols-3 gap-8 max-w-7xl mx-auto text-left">
             {/* Camera Section - Takes 2 columns */}
             <div className="xl:col-span-2">
-              <div className="bg-slate-800/50 backdrop-blur-xl rounded-3xl border border-slate-700/50 shadow-2xl overflow-hidden">
-                <div className="p-2">
-                  <div className="rounded-2xl overflow-hidden border border-slate-600/30 shadow-xl">
-                    <CameraView
-                      isActive={isVideoActive}
-                      showLandmarks={showLandmarks}
-                      onLetterRecognized={handleLetterRecognized}
-                      onWordComplete={handleWordComplete}
-                      recognizedLetter={recognizedLetter}
-                    />
-                  </div>
-                </div>
+              <div className="border border-white/10 rounded-lg overflow-hidden">
+                <CameraView
+                  isActive={isVideoActive}
+                  showLandmarks={showLandmarks}
+                  onLetterRecognized={handleLetterRecognized}
+                  onWordComplete={handleWordComplete}
+                  recognizedLetter={recognizedLetter}
+                />
                 <ControlBar
                   isVideoActive={isVideoActive}
                   showLandmarks={showLandmarks}
@@ -160,18 +182,20 @@ const Index = () => {
           </div>
         </div>
 
-        {/* Modern Footer */}
-        <footer className="pb-16">
-          <div className="container mx-auto px-6 text-center">
-            <div className="inline-flex items-center gap-3 px-8 py-4 bg-slate-800/30 backdrop-blur-sm rounded-full border border-slate-700/50">
-              <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse shadow-lg shadow-green-400/50"></div>
-              <p className="text-slate-300 font-medium">
-                Empowering communication through AI • Built for accessibility
-              </p>
+        {/* Brand Logos Section */}
+        <div className="border-t border-white/10 py-12">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="flex flex-wrap items-center justify-center gap-8 opacity-50">
+              <div className="text-2xl font-bold">AI</div>
+              <div className="text-2xl font-bold">ML</div>
+              <div className="text-2xl font-bold">ASL</div>
+              <div className="text-2xl font-bold">SPEECH</div>
+              <div className="text-2xl font-bold">VISION</div>
+              <div className="text-2xl font-bold">TECH</div>
             </div>
           </div>
-        </footer>
-      </div>
+        </div>
+      </main>
     </div>
   );
 };

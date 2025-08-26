@@ -20,60 +20,57 @@ export const ControlBar = ({
   disabled = false
 }: ControlBarProps) => {
   return (
-    <div className="bg-slate-800/80 backdrop-blur-sm border-t border-slate-700/50 p-6">
+    <div className="border-t border-white/10 p-6 bg-black">
       <div className="flex items-center justify-between">
         {/* Camera Control */}
         <Button
           onClick={onCameraToggle}
           disabled={disabled}
-          variant={isVideoActive ? "destructive" : "default"}
+          variant="outline"
           size="lg"
           className={`
-            min-w-[160px] h-12 font-semibold transition-all duration-300 hover:scale-105
-            ${isVideoActive 
-              ? 'bg-red-500 hover:bg-red-600 shadow-lg shadow-red-500/25' 
-              : 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 shadow-lg shadow-purple-500/25'
-            }
+            min-w-[160px] px-8 py-3 font-semibold border-white/20 text-white hover:bg-white/10 text-sm uppercase tracking-widest
+            ${isVideoActive ? 'bg-red-500/20 border-red-500/50' : ''}
           `}
         >
           {isVideoActive ? (
             <>
-              <Square className="w-5 h-5 mr-2 fill-current" />
-              Stop Camera
+              <Square className="w-4 h-4 mr-2" />
+              STOP CAMERA
             </>
           ) : (
             <>
-              <Play className="w-5 h-5 mr-2 fill-current" />
-              Start Camera
+              <Play className="w-4 h-4 mr-2" />
+              START CAMERA
             </>
           )}
         </Button>
 
         {/* Landmark Toggle */}
         <div className="flex items-center gap-4">
-          <Label htmlFor="landmarks-toggle" className="text-sm font-semibold text-slate-200">
-            Hand Landmarks
+          <Label htmlFor="landmarks-toggle" className="text-sm font-semibold uppercase tracking-widest">
+            LANDMARKS
           </Label>
-          <div className="flex items-center gap-3 bg-slate-700/50 rounded-full px-4 py-2">
-            <EyeOff className="w-4 h-4 text-slate-400" />
+          <div className="flex items-center gap-3 border border-white/20 rounded px-4 py-2">
+            <EyeOff className="w-4 h-4" />
             <Switch
               id="landmarks-toggle"
               checked={showLandmarks}
               onCheckedChange={onLandmarksToggle}
               disabled={disabled || !isVideoActive}
-              className="data-[state=checked]:bg-purple-500"
+              className="data-[state=checked]:bg-white"
             />
-            <Eye className="w-4 h-4 text-slate-400" />
+            <Eye className="w-4 h-4" />
           </div>
         </div>
       </div>
 
       {/* Instructions */}
       <div className="mt-4 text-center">
-        <p className="text-xs text-slate-400 bg-slate-700/30 rounded-full px-4 py-2 inline-block">
+        <p className="text-xs text-white/50 border border-white/10 rounded px-4 py-2 inline-block uppercase tracking-wider">
           {isVideoActive 
-            ? "✋ Hold your hand steady in front of the camera for ASL recognition"
-            : "🎥 Enable camera access to start recognizing American Sign Language"
+            ? "Hold your hand steady in front of the camera"
+            : "Enable camera access to start recognition"
           }
         </p>
       </div>

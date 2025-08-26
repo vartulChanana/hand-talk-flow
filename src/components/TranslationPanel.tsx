@@ -24,21 +24,16 @@ export const TranslationPanel = ({
   };
 
   return (
-    <div className="h-full bg-slate-800/50 backdrop-blur-xl rounded-3xl border border-slate-700/50 shadow-2xl overflow-hidden">
+    <div className="h-full border border-white/10 rounded-lg overflow-hidden bg-black">
       <div className="p-6">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
-              <MessageSquare className="w-5 h-5 text-white" />
-            </div>
-            <h2 className="text-xl font-bold text-white">Translation</h2>
-          </div>
+          <h2 className="text-xl font-bold uppercase tracking-widest">TRANSLATION</h2>
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
             onClick={onClear}
-            className="hover:bg-red-500/20 hover:text-red-400 transition-all duration-300 rounded-xl"
+            className="border-white/20 text-white hover:bg-white/10"
             disabled={!currentWord && translatedWords.length === 0}
           >
             <Trash2 className="w-4 h-4" />
@@ -46,29 +41,26 @@ export const TranslationPanel = ({
         </div>
 
         {/* Current Word Being Formed */}
-        <div className="mb-6">
-          <div className="flex items-center gap-2 mb-3">
-            <Sparkles className="w-4 h-4 text-purple-400" />
-            <h3 className="text-sm font-semibold text-purple-300 uppercase tracking-wide">
-              Current Word
-            </h3>
-          </div>
-          <div className="bg-slate-700/50 backdrop-blur-sm rounded-2xl px-6 py-4 min-h-[80px] flex items-center border border-slate-600/30">
-            <span className="text-3xl font-bold text-white">
+        <div className="mb-8">
+          <h3 className="text-sm font-semibold uppercase tracking-widest mb-4 text-white/70">
+            CURRENT WORD
+          </h3>
+          <div className="border border-white/10 rounded px-6 py-4 min-h-[80px] flex items-center">
+            <span className="text-3xl font-bold">
               {currentWord || (
-                <span className="text-slate-400 text-xl">
-                  Start signing...
+                <span className="text-white/50 text-xl">
+                  START SIGNING...
                 </span>
               )}
             </span>
             {currentWord && (
               <Button
-                variant="ghost"
+                variant="outline"
                 size="sm"
                 onClick={() => speakWord(currentWord)}
-                className="ml-auto hover:bg-purple-500/20 hover:text-purple-300 transition-all duration-300 rounded-xl"
+                className="ml-auto border-white/20 text-white hover:bg-white/10"
               >
-                <Volume2 className="w-5 h-5" />
+                <Volume2 className="w-4 h-4" />
               </Button>
             )}
           </div>
@@ -76,21 +68,21 @@ export const TranslationPanel = ({
 
         {/* Translated Words History */}
         <div className="flex-1">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-semibold text-slate-300 uppercase tracking-wide">
-              History
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold uppercase tracking-widest text-white/70">
+              HISTORY
             </h3>
-            <span className="text-xs text-slate-400 bg-slate-700/50 px-3 py-1 rounded-full">
-              {translatedWords.length} words
+            <span className="text-xs text-white/50 border border-white/10 px-3 py-1 rounded">
+              {translatedWords.length} WORDS
             </span>
           </div>
           
-          <ScrollArea className="h-[320px] bg-slate-700/30 rounded-2xl border border-slate-600/30">
-            <div className="p-4 space-y-3">
+          <ScrollArea className="h-[320px] border border-white/10 rounded">
+            <div className="p-4 space-y-2">
               {translatedWords.length === 0 ? (
-                <div className="text-center text-slate-400 py-12">
+                <div className="text-center text-white/50 py-12">
                   <MessageSquare className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p className="text-lg font-medium">No words yet</p>
+                  <p className="text-lg font-medium uppercase tracking-wide">NO WORDS YET</p>
                   <p className="text-sm mt-1 opacity-75">
                     Completed words will appear here
                   </p>
@@ -99,14 +91,14 @@ export const TranslationPanel = ({
                 translatedWords.map((word, index) => (
                   <div
                     key={index}
-                    className="group flex items-center justify-between bg-slate-600/30 backdrop-blur-sm rounded-xl px-4 py-3 hover:bg-slate-600/50 transition-all duration-300 border border-slate-500/20"
+                    className="group flex items-center justify-between border border-white/10 rounded px-4 py-3 hover:bg-white/5 transition-colors"
                   >
-                    <span className="font-semibold text-white">{word}</span>
+                    <span className="font-semibold uppercase tracking-wide">{word}</span>
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
                       onClick={() => speakWord(word)}
-                      className="opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-purple-500/20 hover:text-purple-300 rounded-lg"
+                      className="opacity-0 group-hover:opacity-100 transition-opacity border-white/20 text-white hover:bg-white/10"
                     >
                       <Volume2 className="w-4 h-4" />
                     </Button>
@@ -118,9 +110,9 @@ export const TranslationPanel = ({
         </div>
 
         {/* Info */}
-        <div className="mt-4 text-center">
-          <p className="text-xs text-slate-400 bg-slate-700/30 rounded-full px-4 py-2 inline-block">
-            🔊 Words are automatically spoken when completed
+        <div className="mt-6 text-center">
+          <p className="text-xs text-white/50 border border-white/10 rounded px-4 py-2 inline-block uppercase tracking-wider">
+            WORDS ARE AUTOMATICALLY SPOKEN
           </p>
         </div>
       </div>

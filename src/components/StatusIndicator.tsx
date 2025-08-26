@@ -12,52 +12,42 @@ export const StatusIndicator = ({ status }: StatusIndicatorProps) => {
       case 'LOADING':
         return {
           icon: Loader2,
-          text: 'Loading AI Models...',
-          className: 'text-yellow-400 animate-spin',
-          bgClassName: 'bg-yellow-400/10 border-yellow-400/30 shadow-yellow-400/20',
-          glowClassName: 'shadow-lg'
+          text: 'LOADING AI MODELS',
+          className: 'animate-spin'
         };
       case 'READY':
         return {
           icon: CheckCircle,
-          text: 'Ready for Recognition',
-          className: 'text-green-400',
-          bgClassName: 'bg-green-400/10 border-green-400/30 shadow-green-400/20',
-          glowClassName: 'shadow-lg'
+          text: 'READY FOR RECOGNITION',
+          className: ''
         };
       case 'RECOGNIZING':
         return {
           icon: Sparkles,
-          text: 'Recognizing ASL...',
-          className: 'text-purple-400 animate-pulse',
-          bgClassName: 'bg-purple-400/10 border-purple-400/30 shadow-purple-400/20',
-          glowClassName: 'shadow-lg'
+          text: 'RECOGNIZING ASL',
+          className: 'animate-pulse'
         };
       case 'ERROR':
         return {
           icon: AlertCircle,
-          text: 'Model Loading Error',
-          className: 'text-red-400',
-          bgClassName: 'bg-red-400/10 border-red-400/30 shadow-red-400/20',
-          glowClassName: 'shadow-lg'
+          text: 'MODEL LOADING ERROR',
+          className: ''
         };
       default:
         return {
           icon: Loader2,
-          text: 'Loading...',
-          className: 'text-slate-400',
-          bgClassName: 'bg-slate-400/10 border-slate-600/30',
-          glowClassName: ''
+          text: 'LOADING',
+          className: ''
         };
     }
   };
 
-  const { icon: Icon, text, className, bgClassName, glowClassName } = getStatusConfig();
+  const { icon: Icon, text, className } = getStatusConfig();
 
   return (
-    <div className={`inline-flex items-center gap-3 px-6 py-3 rounded-full border backdrop-blur-sm text-sm font-semibold ${bgClassName} ${glowClassName}`}>
+    <div className="inline-flex items-center gap-3 px-6 py-3 border border-white/20 rounded text-sm font-semibold tracking-widest uppercase">
       <Icon className={`w-5 h-5 ${className}`} />
-      <span className="text-white">{text}</span>
+      <span>{text}</span>
     </div>
   );
 };
