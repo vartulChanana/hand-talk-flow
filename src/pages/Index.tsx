@@ -62,8 +62,10 @@ const Index = () => {
   };
 
   const handleLetterRecognized = (letter: string) => {
-    setRecognizedLetter(letter);
-    setCurrentWord(prev => prev + letter);
+    if (recognizedLetter !== letter) {
+      setRecognizedLetter(letter);
+      setCurrentWord(prev => prev + letter);
+    }
   };
 
   const handleWordComplete = () => {

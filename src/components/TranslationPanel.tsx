@@ -24,8 +24,8 @@ export const TranslationPanel = ({
   };
 
   return (
-    <div className="h-full border border-white/10 rounded-lg overflow-hidden bg-black">
-      <div className="p-6">
+    <div className="h-[600px] border border-white/10 rounded-lg overflow-hidden bg-black">
+      <div className="p-4">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold uppercase tracking-widest">TRANSLATION</h2>
@@ -77,7 +77,7 @@ export const TranslationPanel = ({
             </span>
           </div>
           
-          <ScrollArea className="h-[320px] border border-white/10 rounded">
+          <ScrollArea className="h-[240px] border border-white/10 rounded">
             <div className="p-4 space-y-2">
               {translatedWords.length === 0 ? (
                 <div className="text-center text-white/50 py-12">
