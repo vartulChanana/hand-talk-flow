@@ -47,7 +47,18 @@ export const CameraView = ({
   const [lastRecognizedLetter, setLastRecognizedLetter] = useState<string | null>(null);
   const [gestureStabilityCount, setGestureStabilityCount] = useState(0);
   const [currentGesture, setCurrentGesture] = useState<string | null>(null);
-  const STABILITY_THRESHOLD = 15; // Require 15 consecutive frames of same gesture
+  const STABILITY_THRESHOLD = 5; // Require 5 consecutive frames of same gesture
+
+  const resetTimer = useRef<NodeJS.Timeout>();
+
+  // Function to reset last recognized letter after delay
+  const resetLastRecognized = () => {
+    if (resetTimer.current) clearTimeout(resetTimer.current);
+    resetTimer.current = setTimeout(() => {
+      setLastRecognizedLetter(null);
+      console.log('Reset last recognized letter');
+    }, 2000);
+  };
 
   // Initialize MediaPipe Hands with script loading
   useEffect(() => {
@@ -141,25 +152,28 @@ export const CameraView = ({
                 if (recognizedGesture) {
                   if (recognizedGesture === currentGesture) {
                     // Same gesture detected, increment stability counter
-                    setGestureStabilityCount(prev => prev + 1);
+                    const newCount = gestureStabilityCount + 1;
+                    setGestureStabilityCount(newCount);
                     
                     // Only trigger recognition when gesture is stable and different from last recognized
-                    if (gestureStabilityCount >= STABILITY_THRESHOLD && recognizedGesture !== lastRecognizedLetter) {
+                    if (newCount >= STABILITY_THRESHOLD && recognizedGesture !== lastRecognizedLetter) {
+                      console.log('Stable gesture detected:', recognizedGesture);
                       onLetterRecognized(recognizedGesture);
                       setLastRecognizedLetter(recognizedGesture);
-                      setGestureStabilityCount(0); // Reset counter after recognition
                     }
                   } else {
                     // New gesture detected, reset counter
+                    console.log('New gesture detected:', recognizedGesture);
                     setCurrentGesture(recognizedGesture);
                     setGestureStabilityCount(1);
                   }
                 } else {
-                  // No gesture detected, reset everything
-                  setCurrentGesture(null);
-                  setGestureStabilityCount(0);
-                  // Reset last recognized letter after a delay to allow new gestures
-                  setTimeout(() => setLastRecognizedLetter(null), 1000);
+                  // No gesture detected, reset current gesture but keep last recognized for a bit
+                  if (currentGesture) {
+                    setCurrentGesture(null);
+                    setGestureStabilityCount(0);
+                    resetLastRecognized(); // Start timer to reset last recognized
+                  }
                 }
               }
             }
@@ -179,6 +193,9 @@ export const CameraView = ({
     return () => {
       if (hands) {
         hands.close();
+      }
+      if (resetTimer.current) {
+        clearTimeout(resetTimer.current);
       }
     };
   }, [isActive, showLandmarks]);
