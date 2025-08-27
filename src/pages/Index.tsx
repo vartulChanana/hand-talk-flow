@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef } from 'react';
 import { CameraView } from '@/components/CameraView';
 import { TranslationPanel } from '@/components/TranslationPanel';
@@ -10,9 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-
 export type AppStatus = 'LOADING' | 'READY' | 'RECOGNIZING' | 'ERROR';
-
 const Index = () => {
   const [isVideoActive, setIsVideoActive] = useState(false);
   const [showLandmarks, setShowLandmarks] = useState(true);
@@ -22,13 +19,14 @@ const Index = () => {
   const [recognizedLetter, setRecognizedLetter] = useState<string>('');
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isSpeechEnabled, setIsSpeechEnabled] = useState(true);
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
 
   // Refs for smooth scrolling
   const demoRef = useRef<HTMLDivElement>(null);
   const aboutRef = useRef<HTMLDivElement>(null);
   const contactRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
     const loadModels = async () => {
       try {
@@ -37,21 +35,19 @@ const Index = () => {
         setAppStatus('READY');
         toast({
           title: "🚀 Vocalize Ready",
-          description: "AI models loaded successfully. Ready to translate!",
+          description: "AI models loaded successfully. Ready to translate!"
         });
       } catch (error) {
         setAppStatus('ERROR');
         toast({
           title: "❌ Loading Error",
           description: "Failed to load ASL recognition models.",
-          variant: "destructive",
+          variant: "destructive"
         });
       }
     };
-
     loadModels();
   }, [toast]);
-
   const handleCameraToggle = () => {
     setIsVideoActive(!isVideoActive);
     if (!isVideoActive && appStatus === 'READY') {
@@ -60,30 +56,25 @@ const Index = () => {
       setAppStatus('READY');
     }
   };
-
   const handleLetterRecognized = (letter: string) => {
     if (recognizedLetter !== letter) {
       setRecognizedLetter(letter);
       setCurrentWord(prev => prev + letter);
     }
   };
-
   const handleWordComplete = () => {
     if (currentWord.trim()) {
       setTranslatedWords(prev => [...prev, currentWord.trim()]);
-      
       if ('speechSynthesis' in window) {
         const utterance = new SpeechSynthesisUtterance(currentWord.trim());
         utterance.rate = 0.8;
         utterance.pitch = 1;
         speechSynthesis.speak(utterance);
       }
-      
       setCurrentWord('');
       setRecognizedLetter('');
     }
   };
-
   const handleClearTranslation = () => {
     setTranslatedWords([]);
     setCurrentWord('');
@@ -92,13 +83,17 @@ const Index = () => {
 
   // Navigation functions
   const scrollToSection = (ref: React.RefObject<HTMLDivElement>) => {
-    ref.current?.scrollIntoView({ behavior: 'smooth' });
+    ref.current?.scrollIntoView({
+      behavior: 'smooth'
+    });
   };
-
   const handleNavigation = (section: string) => {
     switch (section) {
       case 'home':
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        });
         break;
       case 'demo':
         scrollToSection(demoRef);
@@ -118,23 +113,21 @@ const Index = () => {
     scrollToSection(demoRef);
     toast({
       title: isVideoActive ? "Camera Stopped" : "Camera Started",
-      description: isVideoActive ? "ASL recognition stopped" : "ASL recognition active",
+      description: isVideoActive ? "ASL recognition stopped" : "ASL recognition active"
     });
   };
-
   const handleTranslationAction = () => {
     scrollToSection(demoRef);
     toast({
       title: "Translation Panel",
-      description: "View your translated words and speech output",
+      description: "View your translated words and speech output"
     });
   };
-
   const handleSpeechAction = () => {
     setIsSpeechEnabled(!isSpeechEnabled);
     toast({
       title: isSpeechEnabled ? "Speech Disabled" : "Speech Enabled",
-      description: isSpeechEnabled ? "Auto-speech is now off" : "Auto-speech is now on",
+      description: isSpeechEnabled ? "Auto-speech is now off" : "Auto-speech is now on"
     });
   };
 
@@ -142,13 +135,11 @@ const Index = () => {
   const handleLogin = (email: string, password: string) => {
     toast({
       title: "Login Attempted",
-      description: `Login with ${email} - Demo mode active`,
+      description: `Login with ${email} - Demo mode active`
     });
     setIsLoginOpen(false);
   };
-
-  return (
-    <div className="min-h-screen bg-black text-white">
+  return <div className="min-h-screen bg-black text-white">
       {/* Navigation Header */}
       <nav className="border-b border-white/10">
         <div className="max-w-7xl mx-auto px-6 py-4">
@@ -187,7 +178,7 @@ const Index = () => {
       <main className="flex-1">
         <div className="max-w-7xl mx-auto px-6 py-24 text-center">
           {/* Main Title */}
-          <h1 className="text-8xl md:text-9xl font-black tracking-tighter mb-8 leading-none">
+          <h1 className="text-8xl font-black tracking-tighter mb-8 leading-none md:text-8xl">
             ASL TO SPEECH
             <br />
             TRANSLATOR
@@ -206,31 +197,16 @@ const Index = () => {
 
           {/* Action Buttons */}
           <div className="flex flex-wrap items-center justify-center gap-4 mb-24">
-            <Button 
-              onClick={handleCameraAction}
-              variant="outline" 
-              size="lg"
-              className={`border-white/20 text-white hover:bg-white/10 px-8 py-3 text-sm uppercase tracking-widest transition-all
-                ${isVideoActive ? 'bg-green-500/20 border-green-500/50' : ''}`}
-            >
+            <Button onClick={handleCameraAction} variant="outline" size="lg" className={`border-white/20 text-white hover:bg-white/10 px-8 py-3 text-sm uppercase tracking-widest transition-all
+                ${isVideoActive ? 'bg-green-500/20 border-green-500/50' : ''}`}>
               <Camera className="w-4 h-4 mr-2" />
               {isVideoActive ? 'STOP CAMERA' : 'START CAMERA'}
             </Button>
-            <Button 
-              onClick={handleTranslationAction}
-              variant="outline" 
-              size="lg"
-              className="border-white/20 text-white hover:bg-white/10 px-8 py-3 text-sm uppercase tracking-widest"
-            >
+            <Button onClick={handleTranslationAction} variant="outline" size="lg" className="border-white/20 text-white hover:bg-white/10 px-8 py-3 text-sm uppercase tracking-widest">
               VIEW TRANSLATION
             </Button>
-            <Button 
-              onClick={handleSpeechAction}
-              variant="outline" 
-              size="lg"
-              className={`border-white/20 text-white hover:bg-white/10 px-8 py-3 text-sm uppercase tracking-widest transition-all
-                ${isSpeechEnabled ? 'bg-blue-500/20 border-blue-500/50' : 'bg-red-500/20 border-red-500/50'}`}
-            >
+            <Button onClick={handleSpeechAction} variant="outline" size="lg" className={`border-white/20 text-white hover:bg-white/10 px-8 py-3 text-sm uppercase tracking-widest transition-all
+                ${isSpeechEnabled ? 'bg-blue-500/20 border-blue-500/50' : 'bg-red-500/20 border-red-500/50'}`}>
               <Volume2 className="w-4 h-4 mr-2" />
               {isSpeechEnabled ? 'SPEECH ON' : 'SPEECH OFF'}
             </Button>
@@ -241,30 +217,14 @@ const Index = () => {
             {/* Camera Section - Takes 2 columns */}
             <div className="xl:col-span-2">
               <div className="border border-white/10 rounded-lg overflow-hidden">
-                <CameraView
-                  isActive={isVideoActive}
-                  showLandmarks={showLandmarks}
-                  onLetterRecognized={handleLetterRecognized}
-                  onWordComplete={handleWordComplete}
-                  recognizedLetter={recognizedLetter}
-                />
-                <ControlBar
-                  isVideoActive={isVideoActive}
-                  showLandmarks={showLandmarks}
-                  onCameraToggle={handleCameraToggle}
-                  onLandmarksToggle={() => setShowLandmarks(!showLandmarks)}
-                  disabled={appStatus !== 'READY' && appStatus !== 'RECOGNIZING'}
-                />
+                <CameraView isActive={isVideoActive} showLandmarks={showLandmarks} onLetterRecognized={handleLetterRecognized} onWordComplete={handleWordComplete} recognizedLetter={recognizedLetter} />
+                <ControlBar isVideoActive={isVideoActive} showLandmarks={showLandmarks} onCameraToggle={handleCameraToggle} onLandmarksToggle={() => setShowLandmarks(!showLandmarks)} disabled={appStatus !== 'READY' && appStatus !== 'RECOGNIZING'} />
               </div>
             </div>
 
             {/* Translation Panel - Takes 1 column */}
             <div className="xl:col-span-1">
-              <TranslationPanel
-                currentWord={currentWord}
-                translatedWords={translatedWords}
-                onClear={handleClearTranslation}
-              />
+              <TranslationPanel currentWord={currentWord} translatedWords={translatedWords} onClear={handleClearTranslation} />
             </div>
           </div>
 
@@ -297,15 +257,10 @@ const Index = () => {
             <p className="text-lg text-white/70 leading-relaxed mb-8">
               Have questions about Vocalize? Want to contribute to accessibility technology? We'd love to hear from you.
             </p>
-            <Button 
-              variant="outline" 
-              size="lg"
-              className="border-white/20 text-white hover:bg-white/10 px-12 py-4 text-sm uppercase tracking-widest"
-              onClick={() => toast({
-                title: "Contact Us",
-                description: "Email: hello@vocalize.ai | Phone: +1-555-VOCALIZE"
-              })}
-            >
+            <Button variant="outline" size="lg" className="border-white/20 text-white hover:bg-white/10 px-12 py-4 text-sm uppercase tracking-widest" onClick={() => toast({
+            title: "Contact Us",
+            description: "Email: hello@vocalize.ai | Phone: +1-555-VOCALIZE"
+          })}>
               CONTACT US
             </Button>
           </div>
@@ -325,54 +280,33 @@ const Index = () => {
           </div>
         </div>
       </main>
-    </div>
-  );
+    </div>;
 };
 
 // Login Form Component
-const LoginForm = ({ onLogin }: { onLogin: (email: string, password: string) => void }) => {
+const LoginForm = ({
+  onLogin
+}: {
+  onLogin: (email: string, password: string) => void;
+}) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onLogin(email, password);
   };
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+  return <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <Label htmlFor="email" className="text-white uppercase tracking-widest text-xs">Email</Label>
-        <Input
-          id="email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="bg-white/5 border-white/20 text-white mt-2"
-          placeholder="your@email.com"
-          required
-        />
+        <Input id="email" type="email" value={email} onChange={e => setEmail(e.target.value)} className="bg-white/5 border-white/20 text-white mt-2" placeholder="your@email.com" required />
       </div>
       <div>
         <Label htmlFor="password" className="text-white uppercase tracking-widest text-xs">Password</Label>
-        <Input
-          id="password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="bg-white/5 border-white/20 text-white mt-2"
-          placeholder="••••••••"
-          required
-        />
+        <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} className="bg-white/5 border-white/20 text-white mt-2" placeholder="••••••••" required />
       </div>
-      <Button 
-        type="submit" 
-        className="w-full bg-white text-black hover:bg-white/90 uppercase tracking-widest"
-      >
+      <Button type="submit" className="w-full bg-white text-black hover:bg-white/90 uppercase tracking-widest">
         LOGIN
       </Button>
-    </form>
-  );
+    </form>;
 };
-
 export default Index;
