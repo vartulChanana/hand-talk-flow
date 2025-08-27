@@ -45,6 +45,9 @@ export const CameraView = ({
   const [hands, setHands] = useState<any | null>(null);
   const [handDetected, setHandDetected] = useState(false);
   const [lastRecognizedLetter, setLastRecognizedLetter] = useState<string | null>(null);
+  const [gestureStabilityCount, setGestureStabilityCount] = useState(0);
+  const [currentGesture, setCurrentGesture] = useState<string | null>(null);
+  const STABILITY_THRESHOLD = 15; // Require 15 consecutive frames of same gesture
 
   // Initialize MediaPipe Hands with script loading
   useEffect(() => {
@@ -132,16 +135,32 @@ export const CameraView = ({
                 ctx.stroke();
                 ctx.globalAlpha = 1;
 
-                // Enhanced gesture recognition - stable single recognition per gesture
+                // Enhanced gesture recognition with stability checking
                 const recognizedGesture = recognizeGesture(landmarks);
                 
-                // Only trigger when a NEW different gesture is detected
-                if (recognizedGesture && recognizedGesture !== lastRecognizedLetter) {
-                  onLetterRecognized(recognizedGesture);
-                  setLastRecognizedLetter(recognizedGesture);
+                if (recognizedGesture) {
+                  if (recognizedGesture === currentGesture) {
+                    // Same gesture detected, increment stability counter
+                    setGestureStabilityCount(prev => prev + 1);
+                    
+                    // Only trigger recognition when gesture is stable and different from last recognized
+                    if (gestureStabilityCount >= STABILITY_THRESHOLD && recognizedGesture !== lastRecognizedLetter) {
+                      onLetterRecognized(recognizedGesture);
+                      setLastRecognizedLetter(recognizedGesture);
+                      setGestureStabilityCount(0); // Reset counter after recognition
+                    }
+                  } else {
+                    // New gesture detected, reset counter
+                    setCurrentGesture(recognizedGesture);
+                    setGestureStabilityCount(1);
+                  }
+                } else {
+                  // No gesture detected, reset everything
+                  setCurrentGesture(null);
+                  setGestureStabilityCount(0);
+                  // Reset last recognized letter after a delay to allow new gestures
+                  setTimeout(() => setLastRecognizedLetter(null), 1000);
                 }
-                // Don't reset lastRecognizedLetter when no gesture is detected
-                // This prevents re-triggering the same gesture due to intermittent detection
               }
             }
           }
