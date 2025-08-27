@@ -45,10 +45,10 @@ export const TranslationPanel = ({
           <h3 className="text-sm font-semibold uppercase tracking-widest mb-4 text-white/70">
             CURRENT WORD
           </h3>
-          <div className="border border-white/10 rounded px-6 py-4 min-h-[80px] flex items-center">
-            <span className="text-3xl font-bold">
+          <div className="border border-white/10 rounded px-4 py-4 min-h-[80px] flex items-center overflow-hidden">
+            <span className="text-2xl font-bold break-all">
               {currentWord || (
-                <span className="text-white/50 text-xl">
+                <span className="text-white/50 text-lg">
                   START SIGNING...
                 </span>
               )}
@@ -91,9 +91,9 @@ export const TranslationPanel = ({
                 translatedWords.map((word, index) => (
                   <div
                     key={index}
-                    className="group flex items-center justify-between border border-white/10 rounded px-4 py-3 hover:bg-white/5 transition-colors"
+                    className="group flex items-center justify-between border border-white/10 rounded px-3 py-2 hover:bg-white/5 transition-colors"
                   >
-                    <span className="font-semibold uppercase tracking-wide">{word}</span>
+                    <span className="font-semibold uppercase tracking-wide text-sm break-all">{word}</span>
                     <Button
                       variant="outline"
                       size="sm"

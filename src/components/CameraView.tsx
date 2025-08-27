@@ -47,7 +47,7 @@ export const CameraView = ({
   const [lastRecognizedLetter, setLastRecognizedLetter] = useState<string | null>(null);
   const [gestureStabilityCount, setGestureStabilityCount] = useState(0);
   const [currentGesture, setCurrentGesture] = useState<string | null>(null);
-  const STABILITY_THRESHOLD = 5; // Require 5 consecutive frames of same gesture
+  const STABILITY_THRESHOLD = 2; // Require 2 consecutive frames of same gesture
 
   const resetTimer = useRef<NodeJS.Timeout>();
 
