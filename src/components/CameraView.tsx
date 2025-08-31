@@ -61,52 +61,55 @@ export const CameraView = ({
     }, 2000);
   };
 
-  // Initialize MediaPipe Hands with script loading
+  // Initialize MediaPipe Hands with proper cleanup
   useEffect(() => {
     if (!isActive) return;
 
+    let handsInstance: any = null;
+    let isInitialized = false;
+
     const initializeHands = async () => {
       try {
-        // Load MediaPipe from CDN
+        console.log('Initializing MediaPipe Hands...');
         const Hands = await loadMediaPipe();
         
-        const handsInstance = new (Hands as any)({
+        handsInstance = new (Hands as any)({
           locateFile: (file: string) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
         });
 
-        handsInstance.setOptions({
+        await handsInstance.setOptions({
           maxNumHands: 1,
           modelComplexity: 1,
-          minDetectionConfidence: 0.5,
-          minTrackingConfidence: 0.3,
+          minDetectionConfidence: 0.7,
+          minTrackingConfidence: 0.5,
         });
 
         handsInstance.onResults((results: any) => {
-          console.log('MediaPipe results received:', results.multiHandLandmarks?.length || 0, 'hands detected');
+          if (!isInitialized) return;
+          
           const hasHands = results.multiHandLandmarks && results.multiHandLandmarks.length > 0;
           setHandDetected(hasHands);
+          
+          if (hasHands) {
+            console.log('Hand detected with', results.multiHandLandmarks[0].length, 'landmarks');
+          }
           
           if (canvasRef.current && videoRef.current) {
             const canvas = canvasRef.current;
             const ctx = canvas.getContext('2d');
             if (!ctx) return;
 
-            // Set canvas size to match video dimensions
-            const videoRect = videoRef.current.getBoundingClientRect();
             canvas.width = videoRef.current.videoWidth || 640;
             canvas.height = videoRef.current.videoHeight || 480;
-            
-            // Clear canvas
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
             if (results.multiHandLandmarks && showLandmarks) {
               for (const landmarks of results.multiHandLandmarks) {
-                // Draw landmarks with enhanced visibility
-                ctx.fillStyle = '#14B8A6'; // teal-500
+                // Draw landmarks
+                ctx.fillStyle = '#14B8A6';
                 ctx.strokeStyle = '#14B8A6';
                 ctx.lineWidth = 3;
 
-                // Draw hand landmarks
                 landmarks.forEach((landmark: any, index: number) => {
                   const x = landmark.x * canvas.width;
                   const y = landmark.y * canvas.height;
@@ -115,7 +118,6 @@ export const CameraView = ({
                   ctx.arc(x, y, 6, 0, 2 * Math.PI);
                   ctx.fill();
                   
-                  // Draw landmark number for key points
                   if ([0, 4, 8, 12, 16, 20].includes(index)) {
                     ctx.fillStyle = '#ffffff';
                     ctx.font = 'bold 12px Arial';
@@ -124,14 +126,14 @@ export const CameraView = ({
                   }
                 });
 
-                // Draw hand connections
+                // Draw connections
                 const connections = [
-                  [0, 1], [1, 2], [2, 3], [3, 4], // Thumb
-                  [0, 5], [5, 6], [6, 7], [7, 8], // Index
-                  [0, 9], [9, 10], [10, 11], [11, 12], // Middle  
-                  [0, 13], [13, 14], [14, 15], [15, 16], // Ring
-                  [0, 17], [17, 18], [18, 19], [19, 20], // Pinky
-                  [5, 9], [9, 13], [13, 17] // Palm
+                  [0, 1], [1, 2], [2, 3], [3, 4],
+                  [0, 5], [5, 6], [6, 7], [7, 8],
+                  [0, 9], [9, 10], [10, 11], [11, 12],
+                  [0, 13], [13, 14], [14, 15], [15, 16],
+                  [0, 17], [17, 18], [18, 19], [19, 20],
+                  [5, 9], [9, 13], [13, 17]
                 ];
 
                 ctx.globalAlpha = 0.8;
@@ -148,33 +150,29 @@ export const CameraView = ({
                 ctx.stroke();
                 ctx.globalAlpha = 1;
 
-                // Enhanced gesture recognition with stability checking
+                // Gesture recognition
                 const recognizedGesture = recognizeGesture(landmarks);
                 
                 if (recognizedGesture) {
                   if (recognizedGesture === currentGesture) {
-                    // Same gesture detected, increment stability counter
                     const newCount = gestureStabilityCount + 1;
                     setGestureStabilityCount(newCount);
                     
-                    // Only trigger recognition when gesture is stable and different from last recognized
                     if (newCount >= STABILITY_THRESHOLD && recognizedGesture !== lastRecognizedLetter) {
                       console.log('Stable gesture detected:', recognizedGesture);
                       onLetterRecognized(recognizedGesture);
                       setLastRecognizedLetter(recognizedGesture);
                     }
                   } else {
-                    // New gesture detected, reset counter
                     console.log('New gesture detected:', recognizedGesture);
                     setCurrentGesture(recognizedGesture);
                     setGestureStabilityCount(1);
                   }
                 } else {
-                  // No gesture detected, reset current gesture but keep last recognized for a bit
                   if (currentGesture) {
                     setCurrentGesture(null);
                     setGestureStabilityCount(0);
-                    resetLastRecognized(); // Start timer to reset last recognized
+                    resetLastRecognized();
                   }
                 }
               }
@@ -182,7 +180,9 @@ export const CameraView = ({
           }
         });
 
+        await handsInstance.initialize();
         setHands(handsInstance);
+        isInitialized = true;
         console.log('MediaPipe Hands initialized successfully');
       } catch (error) {
         console.error('Failed to initialize MediaPipe Hands:', error);
@@ -193,8 +193,13 @@ export const CameraView = ({
     initializeHands();
 
     return () => {
-      if (hands) {
-        hands.close();
+      isInitialized = false;
+      if (handsInstance) {
+        try {
+          handsInstance.close();
+        } catch (e) {
+          console.log('Hands instance already closed');
+        }
       }
       if (resetTimer.current) {
         clearTimeout(resetTimer.current);
@@ -202,7 +207,7 @@ export const CameraView = ({
     };
   }, [isActive, showLandmarks]);
 
-  // Process video frames with proper timing
+  // Simple frame processing
   useEffect(() => {
     if (!hands || !isActive || !videoRef.current) return;
 
@@ -212,17 +217,16 @@ export const CameraView = ({
       if (!hands || !videoRef.current) return;
       
       try {
-        if (videoRef.current.videoWidth > 0 && videoRef.current.readyState >= 2) {
-          console.log('Sending frame to MediaPipe...');
+        if (videoRef.current.readyState >= 2 && videoRef.current.videoWidth > 0) {
           await hands.send({ image: videoRef.current });
         }
       } catch (error) {
-        console.error('Error processing frame:', error);
+        console.error('Frame processing error:', error);
       }
     };
 
-    // Process frames at 10 FPS instead of every animation frame
-    intervalId = setInterval(processFrame, 100);
+    // Process at 15 FPS
+    intervalId = setInterval(processFrame, 67);
 
     return () => {
       if (intervalId) {
