@@ -82,6 +82,7 @@ export const CameraView = ({
         });
 
         handsInstance.onResults((results: any) => {
+          console.log('MediaPipe results received:', results.multiHandLandmarks?.length || 0, 'hands detected');
           const hasHands = results.multiHandLandmarks && results.multiHandLandmarks.length > 0;
           setHandDetected(hasHands);
           
@@ -201,54 +202,34 @@ export const CameraView = ({
     };
   }, [isActive, showLandmarks]);
 
-  // Process video frames with error handling
+  // Process video frames with proper timing
   useEffect(() => {
-    if (!hands || !isActive || !videoRef.current || isProcessing) return;
+    if (!hands || !isActive || !videoRef.current) return;
 
-    let animationId: number;
-    let isDestroyed = false;
+    let intervalId: NodeJS.Timeout;
 
     const processFrame = async () => {
-      if (isDestroyed || !hands || !videoRef.current) return;
+      if (!hands || !videoRef.current) return;
       
       try {
         if (videoRef.current.videoWidth > 0 && videoRef.current.readyState >= 2) {
-          setIsProcessing(true);
+          console.log('Sending frame to MediaPipe...');
           await hands.send({ image: videoRef.current });
-          setIsProcessing(false);
         }
       } catch (error) {
         console.error('Error processing frame:', error);
-        setIsProcessing(false);
-        // Don't continue processing if there's an error
-        return;
-      }
-      
-      if (!isDestroyed) {
-        animationId = requestAnimationFrame(processFrame);
       }
     };
 
-    const startProcessing = () => {
-      if (videoRef.current && videoRef.current.readyState >= 2) {
-        processFrame();
-      } else {
-        videoRef.current?.addEventListener('loadeddata', () => {
-          if (!isDestroyed) processFrame();
-        }, { once: true });
-      }
-    };
-
-    startProcessing();
+    // Process frames at 10 FPS instead of every animation frame
+    intervalId = setInterval(processFrame, 100);
 
     return () => {
-      isDestroyed = true;
-      if (animationId) {
-        cancelAnimationFrame(animationId);
+      if (intervalId) {
+        clearInterval(intervalId);
       }
-      setIsProcessing(false);
     };
-  }, [hands, isActive, isProcessing]);
+  }, [hands, isActive]);
 
   // Comprehensive ASL gesture recognition for all 26 letters
   const recognizeGesture = (landmarks: any[]): string | null => {
