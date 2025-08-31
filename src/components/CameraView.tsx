@@ -222,7 +222,7 @@ export const CameraView = ({
     startProcessing();
   }, [hands, isActive]);
 
-  // Enhanced ASL gesture recognition function with full alphabet
+  // Comprehensive ASL gesture recognition for all 26 letters
   const recognizeGesture = (landmarks: any[]): string | null => {
     if (!landmarks || landmarks.length === 0) return null;
 
@@ -230,6 +230,7 @@ export const CameraView = ({
     const thumbTip = landmarks[4];
     const thumbIP = landmarks[3];
     const thumbMCP = landmarks[2];
+    const thumbCMC = landmarks[1];
     const indexTip = landmarks[8];
     const indexDIP = landmarks[7];
     const indexPIP = landmarks[6];
@@ -248,170 +249,203 @@ export const CameraView = ({
     const pinkyMCP = landmarks[17];
     const wrist = landmarks[0];
 
-    // Calculate if fingers are extended
-    const isThumbUp = thumbTip.x > thumbIP.x;
-    const isIndexUp = indexTip.y < indexPIP.y;
-    const isMiddleUp = middleTip.y < middlePIP.y;
-    const isRingUp = ringTip.y < ringPIP.y;
-    const isPinkyUp = pinkyTip.y < pinkyPIP.y;
+    // Helper function to check if finger is extended
+    const isFingerExtended = (tip: any, pip: any, mcp: any): boolean => {
+      return tip.y < pip.y && pip.y < mcp.y;
+    };
 
-    const fingersUp = [isThumbUp, isIndexUp, isMiddleUp, isRingUp, isPinkyUp];
-    const upCount = fingersUp.filter(Boolean).length;
+    // Helper function to check if finger is bent/curled
+    const isFingerBent = (tip: any, pip: any, mcp: any): boolean => {
+      return tip.y > pip.y;
+    };
 
-    // Calculate distances for more precise recognition
+    // Calculate finger states more precisely
+    const isThumbExtended = thumbTip.x > thumbIP.x && thumbTip.x > thumbMCP.x; // For right hand
+    const isIndexExtended = isFingerExtended(indexTip, indexPIP, indexMCP);
+    const isMiddleExtended = isFingerExtended(middleTip, middlePIP, middleMCP);
+    const isRingExtended = isFingerExtended(ringTip, ringPIP, ringMCP);
+    const isPinkyExtended = isFingerExtended(pinkyTip, pinkyPIP, pinkyMCP);
+
+    // Calculate distances for precise recognition
     const thumbIndexDist = Math.sqrt(Math.pow(thumbTip.x - indexTip.x, 2) + Math.pow(thumbTip.y - indexTip.y, 2));
     const thumbMiddleDist = Math.sqrt(Math.pow(thumbTip.x - middleTip.x, 2) + Math.pow(thumbTip.y - middleTip.y, 2));
+    const thumbRingDist = Math.sqrt(Math.pow(thumbTip.x - ringTip.x, 2) + Math.pow(thumbTip.y - ringTip.y, 2));
+    const indexMiddleDist = Math.sqrt(Math.pow(indexTip.x - middleTip.x, 2) + Math.pow(indexTip.y - middleTip.y, 2));
 
-    // A - Closed fist with thumb on side
-    if (!isIndexUp && !isMiddleUp && !isRingUp && !isPinkyUp && thumbTip.y > thumbMCP.y) {
+    // Count extended fingers
+    const extendedFingers = [isThumbExtended, isIndexExtended, isMiddleExtended, isRingExtended, isPinkyExtended];
+    const extendedCount = extendedFingers.filter(Boolean).length;
+
+    // A - Closed fist with thumb beside fingers
+    if (!isIndexExtended && !isMiddleExtended && !isRingExtended && !isPinkyExtended && 
+        isFingerBent(thumbTip, thumbIP, thumbMCP) && thumbTip.y > thumbMCP.y) {
       return 'A';
     }
 
-    // B - Four fingers up, thumb tucked
-    if (!isThumbUp && isIndexUp && isMiddleUp && isRingUp && isPinkyUp) {
+    // B - Four fingers extended, thumb tucked across palm
+    if (!isThumbExtended && isIndexExtended && isMiddleExtended && isRingExtended && isPinkyExtended &&
+        thumbTip.y > thumbMCP.y && thumbTip.x < indexMCP.x) {
       return 'B';
     }
 
-    // C - Curved hand like holding a cup
-    if (thumbIndexDist > 0.05 && thumbIndexDist < 0.15 && 
-        !isIndexUp && !isMiddleUp && !isRingUp && !isPinkyUp) {
+    // C - Curved hand shape (like holding a small cup)
+    if (!isIndexExtended && !isMiddleExtended && !isRingExtended && !isPinkyExtended &&
+        thumbIndexDist > 0.06 && thumbIndexDist < 0.12 &&
+        indexTip.y > indexPIP.y && indexTip.y < indexMCP.y) {
       return 'C';
     }
 
-    // D - Index finger up, thumb touching middle finger
-    if (isIndexUp && !isMiddleUp && !isRingUp && !isPinkyUp && 
-        thumbMiddleDist < 0.05) {
+    // D - Index finger extended, thumb touching middle finger
+    if (isIndexExtended && !isMiddleExtended && !isRingExtended && !isPinkyExtended &&
+        thumbMiddleDist < 0.06 && thumbTip.y < middleTip.y) {
       return 'D';
     }
 
-    // E - All fingers bent down, thumb across
-    if (!isIndexUp && !isMiddleUp && !isRingUp && !isPinkyUp &&
-        indexTip.y > indexMCP.y && middleTip.y > middleMCP.y &&
-        ringTip.y > ringMCP.y && pinkyTip.y > pinkyMCP.y) {
+    // E - All fingers curled down into palm
+    if (!isIndexExtended && !isMiddleExtended && !isRingExtended && !isPinkyExtended &&
+        isFingerBent(indexTip, indexPIP, indexMCP) && 
+        isFingerBent(middleTip, middlePIP, middleMCP) &&
+        isFingerBent(ringTip, ringPIP, ringMCP) &&
+        isFingerBent(pinkyTip, pinkyPIP, pinkyMCP) &&
+        thumbTip.x > indexTip.x) {
       return 'E';
     }
 
-    // F - Index and middle touching thumb, ring and pinky up
-    if (thumbIndexDist < 0.04 && thumbMiddleDist < 0.04 && isRingUp && isPinkyUp) {
+    // F - Thumb and index forming circle, other fingers extended
+    if (thumbIndexDist < 0.05 && isMiddleExtended && isRingExtended && isPinkyExtended &&
+        !isIndexExtended) {
       return 'F';
     }
 
     // G - Index finger pointing horizontally
-    if (isIndexUp && !isMiddleUp && !isRingUp && !isPinkyUp &&
-        Math.abs(indexTip.y - indexMCP.y) < 0.03) {
+    if (isIndexExtended && !isMiddleExtended && !isRingExtended && !isPinkyExtended &&
+        !isThumbExtended && Math.abs(indexTip.y - indexMCP.y) < 0.04 &&
+        indexTip.x > indexMCP.x) {
       return 'G';
     }
 
-    // H - Index and middle fingers horizontal
-    if (isIndexUp && isMiddleUp && !isRingUp && !isPinkyUp &&
-        Math.abs(indexTip.y - indexMCP.y) < 0.03 &&
-        Math.abs(middleTip.y - middleMCP.y) < 0.03) {
+    // H - Index and middle fingers extended horizontally together
+    if (isIndexExtended && isMiddleExtended && !isRingExtended && !isPinkyExtended &&
+        !isThumbExtended && Math.abs(indexTip.y - indexMCP.y) < 0.04 &&
+        Math.abs(middleTip.y - middleMCP.y) < 0.04 &&
+        indexMiddleDist < 0.04) {
       return 'H';
     }
 
-    // I - Pinky up only
-    if (!isThumbUp && !isIndexUp && !isMiddleUp && !isRingUp && isPinkyUp) {
+    // I - Only pinky extended
+    if (!isThumbExtended && !isIndexExtended && !isMiddleExtended && !isRingExtended && isPinkyExtended) {
       return 'I';
     }
 
-    // J - Pinky up with curved motion (simplified to pinky up with thumb extended)
-    if (isThumbUp && !isIndexUp && !isMiddleUp && !isRingUp && isPinkyUp) {
+    // J - Pinky extended with thumb extended (simplified J motion)
+    if (isThumbExtended && !isIndexExtended && !isMiddleExtended && !isRingExtended && isPinkyExtended &&
+        pinkyTip.x < pinkyMCP.x) {
       return 'J';
     }
 
-    // K - Index and middle up in V shape, thumb touching middle
-    if (isIndexUp && isMiddleUp && !isRingUp && !isPinkyUp &&
-        thumbMiddleDist < 0.05 && Math.abs(indexTip.x - middleTip.x) > 0.03) {
+    // K - Index and middle extended in V, thumb touching middle finger
+    if (isIndexExtended && isMiddleExtended && !isRingExtended && !isPinkyExtended &&
+        thumbMiddleDist < 0.06 && indexMiddleDist > 0.04) {
       return 'K';
     }
 
-    // L - Thumb and index at 90 degrees
-    if (isThumbUp && isIndexUp && !isMiddleUp && !isRingUp && !isPinkyUp) {
-      const angle = Math.atan2(indexTip.y - thumbTip.y, indexTip.x - thumbTip.x);
-      if (Math.abs(angle - Math.PI/2) < 0.8) {
+    // L - Thumb and index forming 90-degree angle
+    if (isThumbExtended && isIndexExtended && !isMiddleExtended && !isRingExtended && !isPinkyExtended) {
+      const thumbIndexAngle = Math.atan2(indexTip.y - thumbTip.y, indexTip.x - thumbTip.x);
+      if (Math.abs(thumbIndexAngle) > Math.PI/4 && Math.abs(thumbIndexAngle) < 3*Math.PI/4) {
         return 'L';
       }
     }
 
-    // M - Thumb under first three fingers
-    if (!isThumbUp && !isIndexUp && !isMiddleUp && !isRingUp && !isPinkyUp &&
+    // M - Thumb under first three fingers (index, middle, ring)
+    if (!isIndexExtended && !isMiddleExtended && !isRingExtended && isPinkyExtended &&
         thumbTip.y > indexMCP.y && thumbTip.y > middleMCP.y && thumbTip.y > ringMCP.y) {
       return 'M';
     }
 
-    // N - Thumb under first two fingers
-    if (!isThumbUp && !isIndexUp && !isMiddleUp && isRingUp && isPinkyUp &&
+    // N - Thumb under first two fingers (index, middle)
+    if (!isIndexExtended && !isMiddleExtended && isRingExtended && isPinkyExtended &&
         thumbTip.y > indexMCP.y && thumbTip.y > middleMCP.y) {
       return 'N';
     }
 
-    // O - Circle shape with thumb and index
-    if (thumbIndexDist < 0.04 && !isMiddleUp && !isRingUp && !isPinkyUp) {
+    // O - All fingers forming circle with thumb
+    if (thumbIndexDist < 0.05 && thumbMiddleDist < 0.08 &&
+        !isIndexExtended && !isMiddleExtended && !isRingExtended && !isPinkyExtended &&
+        indexTip.y > indexPIP.y && middleTip.y > middlePIP.y) {
       return 'O';
     }
 
-    // P - Index down, middle horizontal, thumb and ring/pinky folded
-    if (!isIndexUp && isMiddleUp && !isRingUp && !isPinkyUp &&
-        indexTip.y > indexMCP.y && Math.abs(middleTip.y - middleMCP.y) < 0.03) {
+    // P - Index finger pointing down, middle finger horizontal
+    if (!isIndexExtended && isMiddleExtended && !isRingExtended && !isPinkyExtended &&
+        indexTip.y > indexMCP.y && Math.abs(middleTip.y - middleMCP.y) < 0.04 &&
+        thumbMiddleDist < 0.06) {
       return 'P';
     }
 
     // Q - Thumb and index pointing down
-    if (isThumbUp && isIndexUp && !isMiddleUp && !isRingUp && !isPinkyUp &&
-        thumbTip.y > thumbMCP.y && indexTip.y > indexMCP.y) {
+    if (isThumbExtended && isIndexExtended && !isMiddleExtended && !isRingExtended && !isPinkyExtended &&
+        thumbTip.y > thumbMCP.y && indexTip.y > indexMCP.y &&
+        thumbIndexDist > 0.03) {
       return 'Q';
     }
 
-    // R - Index and middle crossed
-    if (isIndexUp && isMiddleUp && !isRingUp && !isPinkyUp &&
+    // R - Index and middle fingers crossed
+    if (isIndexExtended && isMiddleExtended && !isRingExtended && !isPinkyExtended &&
+        !isThumbExtended && indexMiddleDist < 0.03 &&
         Math.abs(indexTip.x - middleTip.x) < 0.02) {
       return 'R';
     }
 
     // S - Closed fist with thumb over fingers
-    if (!isIndexUp && !isMiddleUp && !isRingUp && !isPinkyUp &&
-        thumbTip.y < indexMCP.y && thumbTip.y < middleMCP.y) {
+    if (!isIndexExtended && !isMiddleExtended && !isRingExtended && !isPinkyExtended &&
+        isFingerBent(indexTip, indexPIP, indexMCP) &&
+        thumbTip.y < indexMCP.y && thumbTip.y < middleMCP.y &&
+        thumbTip.x > indexTip.x && thumbTip.x > middleTip.x) {
       return 'S';
     }
 
-    // T - Thumb between index and middle
-    if (!isIndexUp && !isMiddleUp && !isRingUp && !isPinkyUp &&
+    // T - Thumb between index and middle finger
+    if (!isIndexExtended && !isMiddleExtended && !isRingExtended && !isPinkyExtended &&
         thumbTip.y < indexTip.y && thumbTip.y < middleTip.y &&
-        thumbTip.x > indexTip.x && thumbTip.x < middleTip.x) {
+        thumbTip.x > Math.min(indexTip.x, middleTip.x) && 
+        thumbTip.x < Math.max(indexTip.x, middleTip.x)) {
       return 'T';
     }
 
-    // U - Index and middle up together
-    if (!isThumbUp && isIndexUp && isMiddleUp && !isRingUp && !isPinkyUp &&
-        Math.abs(indexTip.x - middleTip.x) < 0.02) {
+    // U - Index and middle fingers extended upward together
+    if (!isThumbExtended && isIndexExtended && isMiddleExtended && !isRingExtended && !isPinkyExtended &&
+        indexMiddleDist < 0.03 && indexTip.y < indexMCP.y && middleTip.y < middleMCP.y) {
       return 'U';
     }
 
-    // V - Index and middle in V shape
-    if (!isThumbUp && isIndexUp && isMiddleUp && !isRingUp && !isPinkyUp &&
-        Math.abs(indexTip.x - middleTip.x) > 0.03) {
+    // V - Index and middle fingers in V shape
+    if (!isThumbExtended && isIndexExtended && isMiddleExtended && !isRingExtended && !isPinkyExtended &&
+        indexMiddleDist > 0.04 && indexTip.y < indexMCP.y && middleTip.y < middleMCP.y) {
       return 'V';
     }
 
-    // W - Index, middle, and ring up
-    if (!isThumbUp && isIndexUp && isMiddleUp && isRingUp && !isPinkyUp) {
+    // W - Index, middle, and ring fingers extended in W shape
+    if (!isThumbExtended && isIndexExtended && isMiddleExtended && isRingExtended && !isPinkyExtended &&
+        indexTip.y < indexMCP.y && middleTip.y < middleMCP.y && ringTip.y < ringMCP.y) {
       return 'W';
     }
 
-    // X - Index finger bent (hook shape)
-    if (!isThumbUp && !isMiddleUp && !isRingUp && !isPinkyUp &&
-        indexTip.y > indexPIP.y && indexTip.y < indexMCP.y) {
+    // X - Index finger bent at second joint (hook shape)
+    if (!isThumbExtended && !isMiddleExtended && !isRingExtended && !isPinkyExtended &&
+        indexTip.y > indexPIP.y && indexDIP.y < indexPIP.y && indexPIP.y < indexMCP.y) {
       return 'X';
     }
 
-    // Y - Thumb and pinky extended
-    if (isThumbUp && !isIndexUp && !isMiddleUp && !isRingUp && isPinkyUp) {
+    // Y - Thumb and pinky extended (shaka/hang loose)
+    if (isThumbExtended && !isIndexExtended && !isMiddleExtended && !isRingExtended && isPinkyExtended &&
+        thumbTip.y < thumbMCP.y && pinkyTip.y < pinkyMCP.y) {
       return 'Y';
     }
 
-    // Z - Index finger making Z motion (simplified to index pointing)
-    if (!isThumbUp && isIndexUp && !isMiddleUp && !isRingUp && !isPinkyUp &&
-        indexTip.x > indexMCP.x) {
+    // Z - Index finger extended horizontally making Z motion (simplified to horizontal pointing)
+    if (!isThumbExtended && isIndexExtended && !isMiddleExtended && !isRingExtended && !isPinkyExtended &&
+        Math.abs(indexTip.y - indexMCP.y) < 0.04 && indexTip.x > indexMCP.x + 0.02) {
       return 'Z';
     }
 
