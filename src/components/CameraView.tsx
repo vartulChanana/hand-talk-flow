@@ -150,10 +150,12 @@ export const CameraView = ({
                 ctx.stroke();
                 ctx.globalAlpha = 1;
 
-                // Gesture recognition
+                // Gesture recognition with debugging
                 const recognizedGesture = recognizeGesture(landmarks);
+                console.log('Gesture recognition result:', recognizedGesture);
                 
                 if (recognizedGesture) {
+                  console.log('Gesture detected:', recognizedGesture, 'Current:', currentGesture, 'Count:', gestureStabilityCount);
                   if (recognizedGesture === currentGesture) {
                     const newCount = gestureStabilityCount + 1;
                     setGestureStabilityCount(newCount);
@@ -170,6 +172,7 @@ export const CameraView = ({
                   }
                 } else {
                   if (currentGesture) {
+                    console.log('No gesture detected, resetting');
                     setCurrentGesture(null);
                     setGestureStabilityCount(0);
                     resetLastRecognized();
@@ -237,7 +240,12 @@ export const CameraView = ({
 
   // Comprehensive ASL gesture recognition for all 26 letters
   const recognizeGesture = (landmarks: any[]): string | null => {
-    if (!landmarks || landmarks.length === 0) return null;
+    if (!landmarks || landmarks.length === 0) {
+      console.log('No landmarks provided');
+      return null;
+    }
+
+    console.log('Processing landmarks for gesture recognition, count:', landmarks.length);
 
     // Get key landmarks for gesture recognition
     const thumbTip = landmarks[4];
@@ -278,6 +286,14 @@ export const CameraView = ({
     const isMiddleExtended = isFingerExtended(middleTip, middlePIP, middleMCP);
     const isRingExtended = isFingerExtended(ringTip, ringPIP, ringMCP);
     const isPinkyExtended = isFingerExtended(pinkyTip, pinkyPIP, pinkyMCP);
+
+    console.log('Finger states:', {
+      thumb: isThumbExtended,
+      index: isIndexExtended,
+      middle: isMiddleExtended,
+      ring: isRingExtended,
+      pinky: isPinkyExtended
+    });
 
     // Calculate distances for precise recognition
     const thumbIndexDist = Math.sqrt(Math.pow(thumbTip.x - indexTip.x, 2) + Math.pow(thumbTip.y - indexTip.y, 2));
